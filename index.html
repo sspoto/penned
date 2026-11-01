@@ -452,12 +452,13 @@ button.chip{cursor:pointer}
         <button class="btn ink grow" id="btnExport">Back up notes</button>
         <button class="btn grow" id="btnRestore">Restore from backup</button>
       </div>
-      <input type="file" id="fileRestore" accept=".json,.txt,application/json,text/plain" hidden>
+      <input type="file" id="fileRestore" hidden>
       <p class="hint">Backups are saved as a .json file, flashcards included. Keep it in Files or iCloud Drive, then use Restore on this or another device. Restoring adds the notes in the backup and keeps the newest version of any note you already have. Restore also accepts the older text backups and text exports.</p>
       <div class="row" style="margin-top:.75rem">
         <button class="btn grow" id="btnExportText">Export all as readable text</button>
       </div>
     </div>
+    <p class="hint" style="text-align:center">Penned version 1.7</p>
   </section>
 </main>
 
@@ -1221,6 +1222,7 @@ Rules:
     const file = e.target.files && e.target.files[0];
     e.target.value = "";
     if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { toast("That file is too large to be a Penned backup."); return; }
     let text = "";
     try { text = await file.text(); } catch { toast("That file couldn’t be opened."); return; }
     const r = restoreFromText(text, true);
@@ -1882,7 +1884,7 @@ ${(n.body || "").slice(0, 60000)}`;
       <p>Paste cards below or choose a text file. Put each question or term on one line and its answer on the next. Blank lines and “Created using AI” lines are skipped, and tab-separated exports (like Quizlet) work too. You can also choose a Penned backup (.json) here.</p>
       <label class="field"><span>Cards</span><textarea class="input imp-text" rows="8" spellcheck="false" placeholder="What is brand equity?&#10;The value created by a brand.&#10;&#10;Branding&#10;The process of endowing products and services with the power of a brand."></textarea></label>
       <div class="row" style="margin:-.4rem 0 1rem"><button class="btn sm" type="button" id="impFileBtn">Choose a text file</button></div>
-      <input type="file" id="impFile" accept=".txt,.json,.csv,.tsv,text/plain,application/json" hidden>
+      <input type="file" id="impFile" hidden>
       <label class="field"><span>Set name</span><input class="input imp-title" maxlength="200" placeholder="e.g. 10: Building Strong Brands"></label>
       <label class="field"><span>Label (optional)</span><input class="input imp-label" maxlength="30" list="impLabels" placeholder="e.g. Marketing"></label>
       <datalist id="impLabels"></datalist>
@@ -1916,8 +1918,10 @@ ${(n.body || "").slice(0, 60000)}`;
       const f = e.target.files && e.target.files[0];
       e.target.value = "";
       if (!f) return;
+      if (f.size > 20 * 1024 * 1024) { toast("That file is too large to import."); return; }
       let text = "";
       try { text = await f.text(); } catch { toast("That file couldn’t be opened."); return; }
+      if (/\u0000/.test(text.slice(0, 2000))) { toast("That isn’t a text or backup file. Choose a .txt or .json file."); return; }
       if (backupList(text)) {
         const r = restoreFromText(text, false);
         if (!r) { toast("That backup has no notes in it."); return; }
