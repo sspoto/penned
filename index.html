@@ -58,7 +58,7 @@ img{max-width:100%}
 
 .top{position:sticky; top:env(safe-area-inset-top,0px); z-index:5; background:var(--bg); border-bottom:1px solid var(--line)}
 .top-inner{max-width:40rem; margin:0 auto; padding:.6rem 1rem; display:flex; align-items:center; gap:.5rem}
-@media (max-width:380px){ .logo{font-size:1.6rem} .tab{padding:.4rem .6rem; font-size:.85rem} }
+@media (max-width:400px){ .logo{font-size:1.6rem} .tab{padding:.4rem .55rem; font-size:.84rem} .top-inner{gap:.35rem; padding-left:.8rem; padding-right:.8rem} }
 .logo{font-family:var(--hand); font-size:2rem; line-height:1; margin:0; font-weight:600}
 .tabs{margin-left:auto; display:flex; gap:.25rem; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:.2rem}
 .tab{white-space:nowrap; border:0; background:transparent; padding:.4rem .75rem; border-radius:999px; font-weight:600; font-size:.9rem; color:var(--muted); display:flex; align-items:center; gap:.4rem}
@@ -206,7 +206,8 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
 @keyframes turn{0%{transform:scaleX(1)}50%{transform:scaleX(0)}100%{transform:scaleX(1)}}
 .face{position:absolute; inset:0; display:flex; flex-direction:column; color:var(--ink); text-align:left; background:var(--surface); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:1.2rem 1.25rem; overflow:auto}
 .face.is-answer{border-color:var(--accent); box-shadow:inset 4px 0 0 var(--accent), var(--shadow)}
-.face .lbl{display:block; font-size:.8rem; font-weight:600; color:var(--muted)}
+.face .lbl{display:flex; justify-content:space-between; gap:.75rem; font-size:.8rem; font-weight:600; color:var(--muted)}
+.face .lbl .src{font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:65%}
 .face.is-answer .lbl{color:var(--accent)}
 .face .txt{display:block; font-family:var(--serif); font-size:1.25rem; line-height:1.45; margin:auto 0; padding:.75rem 0; overflow-wrap:anywhere}
 .face .txt mark{background:var(--hl); color:inherit; border-radius:3px; padding:0 .2rem; font-family:var(--ui); font-size:.8em; font-weight:600}
@@ -238,6 +239,36 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){ .api-badge{transition:none} .api-badge.on svg{animation:none} }
 
+/* Labels */
+.chip-row{display:flex; gap:.4rem; overflow-x:auto; padding:.1rem 0 .5rem; margin:0 -1rem .5rem; padding-left:1rem; padding-right:1rem; scrollbar-width:none}
+.chip-row::-webkit-scrollbar{display:none}
+.chip{display:inline-flex; align-items:center; gap:.35rem; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:999px; padding:.3rem .7rem; font-size:.85rem; font-weight:600; white-space:nowrap; line-height:1.3; flex:none; max-width:100%}
+.chip > span:not(.dot):not(.n){overflow:hidden; text-overflow:ellipsis}
+button.chip{cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+.chip .dot{width:.55rem; height:.55rem; border-radius:50%; flex:none}
+.chip .n{font-weight:500; opacity:.65}
+.chip .x{border:0; background:transparent; color:inherit; padding:0; margin-right:-.3rem; display:grid; place-items:center; width:1.4rem; height:1.4rem; border-radius:50%; flex:none}
+.chip .x svg{width:11px; height:11px}
+.chip.sm{font-size:.74rem; padding:.12rem .5rem; gap:.3rem}
+.chip.sm .dot{width:.45rem; height:.45rem}
+.chip.add{border-style:dashed; color:var(--accent); background:transparent}
+.note-labels{display:flex; flex-wrap:wrap; gap:.4rem; margin:0 0 .8rem; align-items:center}
+.label-add{display:flex; gap:.4rem; width:100%; align-items:center}
+.label-add .input{flex:1; min-width:0; padding:.5rem .7rem; font-size:1rem}
+.btn.sm{min-height:2.5rem; padding:.45rem .85rem; font-size:.9rem; flex:none}
+.suggest{display:flex; flex-wrap:wrap; gap:.4rem; width:100%; margin-top:.2rem}
+.suggest .lab{width:100%; font-size:.8rem; color:var(--muted)}
+.note-item .labs{display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.45rem}
+.lm-row{display:flex; align-items:center; gap:.75rem; padding:.5rem 0; border-top:1px solid var(--line)}
+.lm-row:first-child{border-top:0}
+.lm-row .chip{margin-right:auto; min-width:0}
+.decks-intro{color:var(--muted); font-size:.9rem; margin:0}
+.decks-top{display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin:0 0 .9rem}
+.imp h3{margin:0 0 .35rem; font-size:1.1rem}
+.imp textarea.input{font-family:ui-monospace, "SF Mono", Menlo, monospace; font-size:.85rem; line-height:1.45; resize:vertical; min-height:10rem}
+#btnStudyAll{margin-bottom:1rem}
+
 .toast{position:fixed; left:50%; bottom:calc(5.5rem + env(safe-area-inset-bottom,0px)); transform:translate(-50%, 1rem); background:var(--ink); color:var(--bg); padding:.6rem 1rem; border-radius:999px; font-weight:600; font-size:.9rem; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:20; max-width:calc(100% - 2rem); text-align:center}
 .toast.show{opacity:1; transform:translate(-50%,0)}
 @media (prefers-reduced-motion: reduce){ .toast{transition:none} }
@@ -250,7 +281,8 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     <p class="logo">Penned</p>
     <nav class="tabs" aria-label="Sections">
       <button class="tab" id="tabScan" aria-current="page">Scan</button>
-      <button class="tab" id="tabNotes">My notes <span class="count" id="noteCount" hidden>0</span></button>
+      <button class="tab" id="tabNotes">Notes</button>
+      <button class="tab" id="tabDecks" aria-label="Flashcards">Cards</button>
     </nav>
     <button class="gear" id="tabSettings" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
@@ -307,6 +339,7 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
       <input type="search" id="q" placeholder="Search your notes" aria-label="Search your notes" autocomplete="off">
     </div>
+    <div class="chip-row" id="noteFilter" role="group" aria-label="Filter by label" hidden></div>
     <p class="hint" id="syncNote" hidden></p>
     <ul class="note-list" id="noteList"></ul>
     <div class="empty" id="notesEmpty" hidden>
@@ -319,10 +352,11 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     <div class="note-top">
       <button class="back" id="btnBack">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>
-        <span id="backLabel">My notes</span>
+        <span id="backLabel">Notes</span>
       </button>
       <span class="meta" id="noteMeta"></span>
     </div>
+    <div class="note-labels" id="noteLabels" hidden></div>
     <article class="sheet" id="noteRead">
       <h2 class="note-title" id="noteTitle"></h2>
       <div class="paper" id="noteBody"></div>
@@ -335,11 +369,29 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     <div class="toolbar" id="toolbar"></div>
   </section>
 
+  <section id="view-decks" hidden>
+    <h2 class="set-h">Flashcards</h2>
+    <div class="card imp" id="deckImport" hidden></div>
+    <div id="deckMain">
+    <div class="decks-top">
+      <p class="decks-intro" id="decksIntro" hidden></p>
+      <button class="btn sm" id="btnImportCards">Import</button>
+    </div>
+    <div class="chip-row" id="deckFilter" role="group" aria-label="Filter by label" hidden></div>
+    <button class="btn primary big" id="btnStudyAll" hidden>Study all</button>
+    <ul class="note-list" id="deckList"></ul>
+    <div class="empty" id="decksEmpty" hidden>
+      <p>No flashcards yet. Open a note and tap Cards to make a set from it, or tap Import to add cards you already have.</p>
+      <button class="btn primary" id="btnDecksToNotes">Go to notes</button>
+    </div>
+    </div>
+  </section>
+
   <section id="view-cards" hidden>
     <div class="note-top">
       <button class="back" id="btnCardsBack">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>
-        <span>Back to note</span>
+        <span id="cardsBackLabel">Back to note</span>
       </button>
     </div>
     <div class="cards-head">
@@ -388,6 +440,12 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     </div>
 
     <div class="card">
+      <h3>Labels</h3>
+      <p id="labelsInfo"></p>
+      <div id="labelManager"></div>
+    </div>
+
+    <div class="card">
       <h3>Your notes</h3>
       <p id="storageInfo">Notes are saved in this browser on this device.</p>
       <div class="row">
@@ -422,7 +480,8 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
   const state = {
     view: "scan", pages: [], mode: "exact", notes: [], current: null, from: "notes",
     editing: false, streaming: false, query: "", memoryOnly: false, keyOk: null,
-    study: null, genCards: false, genCount: 0, cardsError: "", shuffle: lsGetEarly("penned.shuffle") === "1", regenArmed: false, cardEdit: null
+    study: null, genCards: false, genCount: 0, cardsError: "", shuffle: lsGetEarly("penned.shuffle") === "1", regenArmed: false, cardEdit: null,
+    notesLabel: null, decksLabel: null, labelInput: false, cardsOrigin: "note"
   };
   function lsGetEarly(k) { try { return localStorage.getItem(k); } catch { return null; } }
   let ctl = null, deleteArmed = null;
@@ -527,17 +586,14 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
   /* ---------- Views ---------- */
   function show(view) {
     state.view = view;
-    for (const v of ["scan", "notes", "note", "cards", "settings"]) $("#view-" + v).hidden = view !== v;
-    const inNote = view === "note" || view === "cards";
-    const notesTab = view === "notes" || (inNote && state.from === "notes");
-    const settingsTab = view === "settings";
-    const scanTab = !notesTab && !settingsTab;
-    $("#tabScan").toggleAttribute("aria-current", scanTab);
-    $("#tabNotes").toggleAttribute("aria-current", notesTab);
-    $("#tabSettings").toggleAttribute("aria-current", settingsTab);
-    if (scanTab) $("#tabScan").setAttribute("aria-current", "page");
-    if (notesTab) $("#tabNotes").setAttribute("aria-current", "page");
-    if (settingsTab) $("#tabSettings").setAttribute("aria-current", "page");
+    for (const v of ["scan", "notes", "note", "decks", "cards", "settings"]) $("#view-" + v).hidden = view !== v;
+    let tab = view;
+    if (view === "note") tab = state.from === "scan" ? "scan" : "notes";
+    if (view === "cards") tab = state.cardsOrigin === "decks" ? "decks" : (state.from === "scan" ? "scan" : "notes");
+    const tabs = { scan: "#tabScan", notes: "#tabNotes", decks: "#tabDecks", settings: "#tabSettings" };
+    for (const [k, sel] of Object.entries(tabs)) {
+      if (k === tab) $(sel).setAttribute("aria-current", "page"); else $(sel).removeAttribute("aria-current");
+    }
     window.scrollTo(0, 0);
   }
   function leaveNote() {
@@ -546,6 +602,8 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     state.study = null;
     state.cardEdit = null;
     state.editing = false;
+    state.labelInput = false;
+    state.importing = null;
     deleteArmed = null;
   }
   function confirmDiscard() {
@@ -561,10 +619,12 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     show(view);
     if (view === "scan") renderScan();
     if (view === "notes") renderNotes();
+    if (view === "decks") renderDecks();
     if (view === "settings") renderSettings();
   }
   $("#tabScan").onclick = () => go("scan");
   $("#tabNotes").onclick = () => go("notes");
+  $("#tabDecks").onclick = () => go("decks");
   $("#tabSettings").onclick = () => go("settings");
   $("#btnEmptyScan").onclick = () => go("scan");
   $("#btnBack").onclick = () => go(state.from === "scan" ? "scan" : "notes");
@@ -795,7 +855,7 @@ Rules:
       renderScan();
       const saved = saveNote(state.current);
       renderNote();
-      toast(saved ? "Saved to My notes" : "Converted, but this browser couldn’t save it. Copy it now.");
+      toast(saved ? "Saved to Notes" : "Converted, but this browser couldn’t save it. Copy it now.");
     } catch (e) {
       state.streaming = false;
       state.current = null;
@@ -824,6 +884,7 @@ Rules:
   function saveNote(n, touch = true) {
     const rec = { id: n.id, title: n.title || "Untitled note", body: n.body || "", createdAt: n.createdAt || Date.now(), updatedAt: (touch || !n.updatedAt) ? Date.now() : n.updatedAt, pages: n.pages || 0 };
     if (Array.isArray(n.cards) && n.cards.length) { rec.cards = n.cards; rec.cardsFrom = n.cardsFrom || ""; }
+    if (Array.isArray(n.labels) && n.labels.length) rec.labels = n.labels.slice();
     n.updatedAt = rec.updatedAt;
     const i = state.notes.findIndex((x) => x.id === n.id);
     if (i >= 0) state.notes[i] = rec; else state.notes.unshift(rec);
@@ -839,18 +900,18 @@ Rules:
   }
 
   /* ---------- Notes list ---------- */
-  function renderCount() {
-    const c = $("#noteCount");
-    c.textContent = state.notes.length;
-    c.hidden = !state.notes.length;
-  }
+  function renderCount() { /* counts are shown inside each list */ }
   function renderNotes() {
     const list = $("#noteList");
     const q = state.query.trim().toLowerCase();
     const sync = $("#syncNote");
     sync.textContent = state.memoryOnly ? "This browser isn’t letting Penned save. Notes will disappear when you close it, so copy anything you need." : "";
     sync.hidden = !state.memoryOnly;
-    const items = q ? state.notes.filter((n) => ((n.title || "") + "\n" + (n.body || "")).toLowerCase().includes(q)) : state.notes;
+    state.notesLabel = validFilter(state.notesLabel, state.notes);
+    const f = state.notesLabel;
+    renderFilterRow($("#noteFilter"), state.notes, f, (pick) => { state.notesLabel = pick; renderNotes(); });
+    const items = state.notes.filter((n) => matchLabel(n, f) &&
+      (!q || ((n.title || "") + "\n" + (n.body || "") + "\n" + (n.labels || []).join(" ")).toLowerCase().includes(q)));
     list.innerHTML = "";
     for (const n of items) {
       const li = document.createElement("li");
@@ -860,14 +921,21 @@ Rules:
       b.innerHTML = '<span class="t"></span><span class="s"></span><span class="d"></span>';
       b.querySelector(".t").textContent = n.title || "Untitled note";
       b.querySelector(".s").textContent = snippet;
-      b.querySelector(".d").textContent = fmtDate(n.updatedAt || n.createdAt) + (n.pages > 1 ? `, ${n.pages} pages` : "");
+      const cardCount = Array.isArray(n.cards) ? n.cards.length : 0;
+      b.querySelector(".d").textContent = fmtDate(n.updatedAt || n.createdAt) + (n.pages > 1 ? `, ${n.pages} pages` : "") + (cardCount ? `, ${cardCount} flashcards` : "");
+      if (n.labels && n.labels.length) {
+        const labs = document.createElement("span");
+        labs.className = "labs";
+        for (const l of n.labels) labs.appendChild(makeChip(l, { small: true }));
+        b.appendChild(labs);
+      }
       b.onclick = () => openNote(n.id);
       li.appendChild(b);
       list.appendChild(li);
     }
     $("#notesEmpty").hidden = items.length > 0;
-    $("#notesEmptyText").textContent = q ? "No notes match that search." : "No notes yet. Scan a page and it’ll show up here.";
-    $("#btnEmptyScan").hidden = !!q;
+    $("#notesEmptyText").textContent = q ? "No notes match that search." : f ? `No notes with the label “${filterName(f)}”.` : "No notes yet. Scan a page and it’ll show up here.";
+    $("#btnEmptyScan").hidden = !!(q || f);
   }
   $("#q").addEventListener("input", (e) => { state.query = e.target.value; renderNotes(); });
   function openNote(id) {
@@ -876,6 +944,7 @@ Rules:
     state.current = Object.assign({}, n);
     state.from = "notes";
     state.editing = false;
+    state.labelInput = false;
     deleteArmed = null;
     show("note");
     renderNote();
@@ -885,7 +954,8 @@ Rules:
   function renderNote() {
     const c = state.current;
     if (!c) return;
-    $("#backLabel").textContent = state.from === "scan" ? "Scan another" : "My notes";
+    $("#backLabel").textContent = state.from === "scan" ? "Scan another" : "Notes";
+    renderNoteLabels();
     $("#noteRead").hidden = state.editing;
     $("#noteEdit").hidden = !state.editing;
     const titleEl = $("#noteTitle"), bodyEl = $("#noteBody"), foot = $("#noteFoot");
@@ -1022,6 +1092,7 @@ Rules:
     $("#btnRemoveKey").hidden = !key;
     $("#storageInfo").textContent = `${state.notes.length} ${state.notes.length === 1 ? "note is" : "notes are"} saved in this browser on this device. Clearing Safari’s website data deletes them, so back up now and then.`;
     $("#btnExport").disabled = !state.notes.length;
+    renderLabelManager();
     $("#btnExportText").disabled = !state.notes.length;
   }
   function setStatus(kind, text) {
@@ -1133,6 +1204,8 @@ Rules:
       };
       const cards = sanitizeCards(raw.cards);
       if (cards.length) { rec.cards = cards; rec.cardsFrom = typeof raw.cardsFrom === "string" ? raw.cardsFrom : ""; }
+      const labels = sanitizeLabels(raw.labels);
+      if (labels.length) rec.labels = labels;
       const i = state.notes.findIndex((x) => x.id === rec.id);
       if (i < 0) { state.notes.push(rec); added++; }
       else if ((state.notes[i].updatedAt || 0) < rec.updatedAt) { state.notes[i] = rec; updated++; }
@@ -1191,13 +1264,204 @@ Rules:
     return out;
   }
 
+  /* ---------- Labels ---------- */
+  const NONE = "\u0000none";
+  const LABEL_COLORS = ["#2B54D9", "#EA580C", "#16A34A", "#9333EA", "#DB2777", "#0D9488", "#CA8A04", "#64748B"];
+  const labelColor = (l) => LABEL_COLORS[parseInt(hash(String(l).toLowerCase()), 36) % LABEL_COLORS.length];
+  const normLabel = (s) => String(s || "").replace(/\s+/g, " ").trim().slice(0, 30);
+  const hasLabel = (n, l) => (n.labels || []).some((x) => x.toLowerCase() === l.toLowerCase());
+  function labelsFrom(notes) {
+    const m = new Map();
+    for (const n of notes) for (const l of (n.labels || [])) {
+      const k = l.toLowerCase();
+      const e = m.get(k);
+      if (e) e.count++; else m.set(k, { name: l, count: 1 });
+    }
+    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
+  }
+  function canonicalLabel(s) {
+    const n = normLabel(s);
+    if (!n) return "";
+    const ex = labelsFrom(state.notes).find((x) => x.name.toLowerCase() === n.toLowerCase());
+    return ex ? ex.name : n;
+  }
+  function sanitizeLabels(arr) {
+    if (!Array.isArray(arr)) return [];
+    const out = [];
+    for (const x of arr) {
+      if (typeof x !== "string") continue;
+      const l = normLabel(x);
+      if (l && !out.some((o) => o.toLowerCase() === l.toLowerCase())) out.push(l);
+    }
+    return out.slice(0, 12);
+  }
+  const matchLabel = (n, f) => !f ? true : f === NONE ? !(n.labels && n.labels.length) : hasLabel(n, f);
+  const filterName = (f) => !f ? "All" : f === NONE ? "No label" : f;
+
+  function makeChip(label, opts = {}) {
+    const el = document.createElement(opts.onClick ? "button" : "span");
+    el.className = "chip" + (opts.small ? " sm" : "");
+    if (opts.onClick) { el.type = "button"; el.onclick = opts.onClick; el.setAttribute("aria-pressed", opts.selected ? "true" : "false"); }
+    if (label && label !== NONE && !opts.plain) {
+      const d = document.createElement("span");
+      d.className = "dot"; d.style.background = labelColor(label);
+      el.appendChild(d);
+    }
+    const nm = document.createElement("span");
+    nm.textContent = opts.text || filterName(label);
+    el.appendChild(nm);
+    if (typeof opts.count === "number") {
+      const c = document.createElement("span");
+      c.className = "n"; c.textContent = opts.count;
+      el.appendChild(c);
+    }
+    if (opts.onRemove) {
+      const x = document.createElement("button");
+      x.type = "button"; x.className = "x";
+      x.setAttribute("aria-label", `Remove label ${label}`);
+      x.innerHTML = I.x;
+      x.onclick = (e) => { e.stopPropagation(); opts.onRemove(); };
+      el.appendChild(x);
+    }
+    return el;
+  }
+  function renderFilterRow(container, notes, selected, onPick, totalText) {
+    container.innerHTML = "";
+    const labels = labelsFrom(notes);
+    const unlabeled = notes.filter((n) => !(n.labels && n.labels.length)).length;
+    container.hidden = !labels.length;
+    if (!labels.length) return;
+    container.appendChild(makeChip(null, { text: "All", count: notes.length, selected: !selected, onClick: () => onPick(null), plain: true }));
+    for (const l of labels) container.appendChild(makeChip(l.name, { count: l.count, selected: selected && selected !== NONE && selected.toLowerCase() === l.name.toLowerCase(), onClick: () => onPick(l.name) }));
+    if (unlabeled) container.appendChild(makeChip(NONE, { count: unlabeled, selected: selected === NONE, onClick: () => onPick(NONE) }));
+  }
+  function validFilter(f, notes) {
+    if (!f) return null;
+    if (f === NONE) return notes.some((n) => !(n.labels && n.labels.length)) ? NONE : null;
+    const hit = labelsFrom(notes).find((x) => x.name.toLowerCase() === f.toLowerCase());
+    return hit ? hit.name : null;
+  }
+
+  // Labels on the open note
+  function renderNoteLabels() {
+    const c = state.current, row = $("#noteLabels");
+    row.hidden = !c || !c.id || state.streaming;
+    if (row.hidden) return;
+    row.innerHTML = "";
+    for (const l of (c.labels || [])) row.appendChild(makeChip(l, { onRemove: () => removeLabel(l) }));
+    if (!state.labelInput) {
+      const add = document.createElement("button");
+      add.type = "button";
+      add.className = "chip add";
+      add.textContent = (c.labels && c.labels.length) ? "+ Label" : "+ Add a label";
+      add.onclick = () => { state.labelInput = true; renderNoteLabels(); };
+      row.appendChild(add);
+      return;
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "label-add";
+    wrap.innerHTML = '<input class="input" maxlength="30" placeholder="Label name" aria-label="Label name" autocapitalize="sentences" enterkeyhint="done"><button class="btn sm ink" type="button">Add</button><button class="linkbtn" type="button">Done</button>';
+    const input = wrap.querySelector("input");
+    const commit = () => { const v = input.value; if (normLabel(v)) { addLabel(v); } };
+    wrap.querySelector(".btn").onclick = commit;
+    wrap.querySelector(".linkbtn").onclick = () => { state.labelInput = false; renderNoteLabels(); };
+    input.onkeydown = (e) => {
+      if (e.key === "Enter") { e.preventDefault(); if (normLabel(input.value)) commit(); else { state.labelInput = false; renderNoteLabels(); } }
+      else if (e.key === "Escape") { state.labelInput = false; renderNoteLabels(); }
+    };
+    row.appendChild(wrap);
+    const suggestions = labelsFrom(state.notes).filter((l) => !hasLabel(c, l.name));
+    if (suggestions.length) {
+      const sug = document.createElement("div");
+      sug.className = "suggest";
+      const t = document.createElement("span");
+      t.className = "lab"; t.textContent = "Your labels";
+      sug.appendChild(t);
+      for (const l of suggestions) sug.appendChild(makeChip(l.name, { onClick: () => addLabel(l.name) }));
+      row.appendChild(sug);
+    }
+    requestAnimationFrame(() => input.focus({ preventScroll: true }));
+  }
+  function addLabel(raw) {
+    const c = state.current;
+    if (!c) return;
+    const l = canonicalLabel(raw);
+    if (!l) return;
+    if (hasLabel(c, l)) { toast(`Already labeled “${l}”`); renderNoteLabels(); return; }
+    if ((c.labels || []).length >= 12) { toast("A note can have up to 12 labels."); return; }
+    c.labels = [...(c.labels || []), l];
+    saveNote(c, false);
+    renderNoteLabels();
+  }
+  function removeLabel(l) {
+    const c = state.current;
+    if (!c) return;
+    c.labels = (c.labels || []).filter((x) => x.toLowerCase() !== l.toLowerCase());
+    saveNote(c, false);
+    renderNoteLabels();
+  }
+
+  // Label manager (Settings)
+  function renderLabelManager() {
+    const box = $("#labelManager");
+    box.innerHTML = "";
+    const labels = labelsFrom(state.notes);
+    $("#labelsInfo").textContent = labels.length
+      ? "Rename or delete a label everywhere it’s used. To label a note, open it and tap “+ Label”."
+      : "You haven’t made any labels yet. Open a note and tap “+ Add a label”.";
+    for (const l of labels) {
+      const row = document.createElement("div");
+      row.className = "lm-row";
+      row.appendChild(makeChip(l.name, { count: l.count }));
+      const ren = document.createElement("button");
+      ren.className = "linkbtn"; ren.textContent = "Rename";
+      ren.onclick = () => renameLabel(l.name);
+      const del = document.createElement("button");
+      del.className = "linkbtn danger"; del.textContent = "Delete";
+      del.onclick = () => deleteLabelEverywhere(l.name, l.count);
+      row.append(ren, del);
+      box.appendChild(row);
+    }
+  }
+  function applyToAllNotes(fn) {
+    for (const n of state.notes) {
+      const before = JSON.stringify(n.labels || []);
+      const next = sanitizeLabels(fn(n.labels || []));
+      if (JSON.stringify(next) !== before) { if (next.length) n.labels = next; else delete n.labels; }
+    }
+    if (state.current) {
+      const fresh = state.notes.find((x) => x.id === state.current.id);
+      if (fresh) { if (fresh.labels) state.current.labels = fresh.labels.slice(); else delete state.current.labels; }
+    }
+    persist();
+  }
+  function renameLabel(old) {
+    const input = window.prompt(`Rename the label “${old}” to:`, old);
+    if (input === null) return;
+    const name = normLabel(input);
+    if (!name || name === old) return;
+    const existing = labelsFrom(state.notes).find((x) => x.name.toLowerCase() === name.toLowerCase() && x.name.toLowerCase() !== old.toLowerCase());
+    const target = existing ? existing.name : name;
+    applyToAllNotes((ls) => ls.map((x) => x.toLowerCase() === old.toLowerCase() ? target : x));
+    for (const k of ["notesLabel", "decksLabel"]) if (state[k] && state[k] !== NONE && state[k].toLowerCase() === old.toLowerCase()) state[k] = target;
+    renderLabelManager();
+    toast(existing ? `Merged into “${target}”` : `Renamed to “${target}”`);
+  }
+  function deleteLabelEverywhere(name, count) {
+    if (!window.confirm(`Remove the label “${name}” from ${count} ${count === 1 ? "note" : "notes"}? The notes themselves stay.`)) return;
+    applyToAllNotes((ls) => ls.filter((x) => x.toLowerCase() !== name.toLowerCase()));
+    for (const k of ["notesLabel", "decksLabel"]) if (state[k] && state[k] !== NONE && state[k].toLowerCase() === name.toLowerCase()) state[k] = null;
+    renderLabelManager();
+    toast(`Label “${name}” deleted`);
+  }
+
   /* ---------- Flashcards ---------- */
   function sanitizeCards(arr) {
     if (!Array.isArray(arr)) return [];
     return arr
       .filter((c) => c && typeof c.q === "string" && typeof c.a === "string" && c.q.trim() && c.a.trim())
       .map((c) => ({ q: c.q.trim().slice(0, 600), a: c.a.trim().slice(0, 1200) }))
-      .slice(0, 80);
+      .slice(0, 500);
   }
   function parseCards(text) {
     const t = stripFences(text);
@@ -1221,11 +1485,78 @@ Title: ${n.title || "Untitled note"}
 Notes:
 ${(n.body || "").slice(0, 60000)}`;
   }
+
+  // Decks and sources
+  const deckNotes = () => state.notes.filter((n) => Array.isArray(n.cards) && n.cards.length);
+  const noteById = (id) => state.notes.find((x) => x.id === id);
+  function notesForSource(src) {
+    const decks = deckNotes();
+    if (src.type === "note") return decks.filter((n) => n.id === src.id);
+    return decks.filter((n) => matchLabel(n, src.label));
+  }
+  function buildDeck(src) {
+    const out = [];
+    for (const n of notesForSource(src)) n.cards.forEach((_, i) => out.push({ n: n.id, i }));
+    return out;
+  }
+  function cardAt(e) {
+    const n = noteById(e.n);
+    return n && n.cards && n.cards[e.i] ? { note: n, card: n.cards[e.i] } : null;
+  }
+  function sourceTitle(src) {
+    if (src.type === "note") { const n = noteById(src.id); return n ? (n.title || "Untitled note") : "Flashcards"; }
+    if (!src.label) return "All flashcards";
+    if (src.label === NONE) return "Flashcards without a label";
+    return src.label;
+  }
+
+  // Flashcards tab
+  function renderDecks() {
+    renderImport();
+    const decks = deckNotes();
+    state.decksLabel = validFilter(state.decksLabel, decks);
+    const f = state.decksLabel;
+    renderFilterRow($("#deckFilter"), decks, f, (pick) => { state.decksLabel = pick; renderDecks(); });
+    const visible = decks.filter((n) => matchLabel(n, f));
+    const total = visible.reduce((s, n) => s + n.cards.length, 0);
+    const list = $("#deckList");
+    list.innerHTML = "";
+    const studyAll = $("#btnStudyAll");
+    studyAll.hidden = visible.length < 2;
+    studyAll.textContent = !f ? `Study all ${total} cards` : f === NONE ? `Study all ${total} unlabeled cards` : `Study all ${total} cards in “${f}”`;
+    studyAll.onclick = () => { state.cardsOrigin = "decks"; state.current = null; startStudy({ type: "set", label: f }); };
+    for (const n of visible) {
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.className = "note-item";
+      b.innerHTML = '<span class="t"></span><span class="d"></span>';
+      b.querySelector(".t").textContent = n.title || "Untitled note";
+      const stale = n.cardsFrom && n.cardsFrom !== hash(n.body || "");
+      b.querySelector(".d").textContent = `${n.cards.length} ${n.cards.length === 1 ? "card" : "cards"}` + (stale ? ", note edited since" : "");
+      if (n.labels && n.labels.length) {
+        const labs = document.createElement("span");
+        labs.className = "labs";
+        for (const l of n.labels) labs.appendChild(makeChip(l, { small: true }));
+        b.appendChild(labs);
+      }
+      b.onclick = () => { state.cardsOrigin = "decks"; state.current = Object.assign({}, n); startStudy({ type: "note", id: n.id }); };
+      li.appendChild(b);
+      list.appendChild(li);
+    }
+    $("#decksEmpty").hidden = decks.length > 0;
+    $("#decksIntro").hidden = !decks.length;
+    $("#decksIntro").textContent = `${decks.length} ${decks.length === 1 ? "set" : "sets"}, ${decks.reduce((s, n) => s + n.cards.length, 0)} cards in total. Tap a set to study it.`;
+  }
+  $("#btnDecksToNotes").onclick = () => go("notes");
+  $("#btnImportCards").onclick = () => { state.importing = { text: "", title: "", label: state.decksLabel && state.decksLabel !== NONE ? state.decksLabel : "", titleTouched: false }; renderDecks(); window.scrollTo(0, 0); };
+
   function openCards() {
     const c = state.current;
     if (!c) return;
     deleteArmed = null;
-    if (Array.isArray(c.cards) && c.cards.length) startStudy();
+    state.cardsOrigin = "note";
+    const saved = noteById(c.id);
+    if (saved && Array.isArray(saved.cards) && saved.cards.length) startStudy({ type: "note", id: c.id });
     else generateCards();
   }
   async function generateCards() {
@@ -1235,6 +1566,7 @@ ${(n.body || "").slice(0, 60000)}`;
     const key = getKey();
     if (!key) { toast("Add your API key in Settings first."); return; }
     state.study = null;
+    state.cardEdit = null;
     state.genCards = true;
     state.genCount = 0;
     state.cardsError = "";
@@ -1261,11 +1593,11 @@ ${(n.body || "").slice(0, 60000)}`;
       saveNote(c, false);
       state.genCards = false;
       toast(`Made ${cards.length} flashcards`);
-      startStudy();
+      startStudy({ type: "note", id: c.id });
     } catch (e) {
       if (!state.genCards || state.current !== c) return;
       state.genCards = false;
-      if (e && e.cancelled) { show("note"); renderNote(); return; }
+      if (e && e.cancelled) { leaveCards(); return; }
       state.cardsError = e && e.type === "cards_parse"
         ? "Couldn’t turn this note into flashcards. Try again."
         : apiMessage(e || {}).msg;
@@ -1276,26 +1608,42 @@ ${(n.body || "").slice(0, 60000)}`;
     for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
     return a;
   }
-  function startStudy(order) {
-    const c = state.current;
-    if (!c || !c.cards || !c.cards.length) return;
-    let deck = order ? order.slice() : c.cards.map((_, i) => i);
+  function startStudy(src, order) {
+    src = src || (state.study && state.study.src);
+    if (!src) return false;
+    let deck = (order ? order.slice() : buildDeck(src)).filter((e) => cardAt(e));
+    if (!deck.length) { toast("There are no flashcards here yet."); return false; }
     if (state.shuffle) deck = shuffled(deck);
-    state.study = { deck, pos: 0, flipped: false, known: [], missed: [], review: !!order };
+    state.study = { src, deck, pos: 0, flipped: false, known: [], missed: [], review: !!order };
     state.genCards = false;
     state.cardsError = "";
     state.regenArmed = false;
+    state.cardEdit = null;
     show("cards");
     renderCards();
+    return true;
+  }
+  function leaveCards() {
+    state.genCards = false;
+    state.study = null;
+    state.cardEdit = null;
+    if (state.cardsOrigin === "decks") { show("decks"); renderDecks(); }
+    else if (state.current) {
+      const fresh = noteById(state.current.id);
+      if (fresh) state.current = Object.assign({}, fresh);
+      show("note"); renderNote();
+    } else { show("notes"); renderNotes(); }
   }
   function cardText(s) { return inline(s).replace(/\n/g, "<br>"); }
   function renderCards() {
-    const c = state.current;
-    if (!c) return;
-    $("#cardsTitle").textContent = c.title || "Untitled note";
     const body = $("#cardsBody"), sub = $("#cardsSub");
     body.innerHTML = "";
+    $("#cardsBackLabel").textContent = state.cardsOrigin === "decks" ? "Flashcards" : "Back to note";
 
+    if (state.genCards || state.cardsError) {
+      const c = state.current;
+      $("#cardsTitle").textContent = c ? (c.title || "Untitled note") : "Flashcards";
+    }
     if (state.genCards) {
       sub.textContent = "Making flashcards from this note";
       const box = document.createElement("div");
@@ -1303,9 +1651,7 @@ ${(n.body || "").slice(0, 60000)}`;
       box.innerHTML = '<div class="thinking"><svg class="pen" viewBox="0 0 42 12" aria-hidden="true"><path d="M1 8c4-6 7 2 11-2s6 3 10-1 7 3 10 0 5 1 9-1"/></svg><span></span></div>';
       box.querySelector("span").textContent = state.genCount ? `Written ${state.genCount} ${state.genCount === 1 ? "card" : "cards"} so far…` : "Reading your note…";
       const stop = document.createElement("button");
-      stop.className = "btn";
-      stop.style.marginTop = "1rem";
-      stop.textContent = "Stop";
+      stop.className = "btn"; stop.style.marginTop = "1rem"; stop.textContent = "Stop";
       stop.onclick = () => ctl && ctl.abort();
       box.appendChild(stop);
       body.appendChild(box);
@@ -1314,30 +1660,36 @@ ${(n.body || "").slice(0, 60000)}`;
     if (state.cardsError) {
       sub.textContent = "";
       const err = document.createElement("div");
-      err.className = "err";
-      err.textContent = state.cardsError;
+      err.className = "err"; err.textContent = state.cardsError;
       body.appendChild(err);
       const row = document.createElement("div");
-      row.className = "study-actions";
-      row.style.marginTop = "1rem";
+      row.className = "study-actions"; row.style.marginTop = "1rem";
       const again = document.createElement("button");
       again.className = "btn primary"; again.textContent = "Try again"; again.onclick = generateCards;
       const back = document.createElement("button");
-      back.className = "btn"; back.textContent = "Back to note"; back.onclick = () => { show("note"); renderNote(); };
+      back.className = "btn"; back.textContent = "Go back"; back.onclick = () => { state.cardsError = ""; leaveCards(); };
       row.append(again, back);
       body.appendChild(row);
       return;
     }
-
-    if (state.cardEdit) { renderCardEditor(body, sub); return; }
+    if (state.cardEdit) {
+      const n = noteById(state.cardEdit.noteId);
+      $("#cardsTitle").textContent = n ? (n.title || "Untitled note") : "Edit cards";
+      renderCardEditor(body, sub);
+      return;
+    }
 
     const s = state.study;
     if (!s) return;
+    $("#cardsTitle").textContent = sourceTitle(s.src);
+    const isSet = s.src.type !== "note";
+    // Drop entries whose card no longer exists
+    s.deck = s.deck.filter((e, k) => k < s.pos || cardAt(e));
     const total = s.deck.length;
     const prog = document.createElement("div");
     prog.className = "progress";
     prog.setAttribute("aria-hidden", "true");
-    prog.innerHTML = `<span style="width:${Math.round((Math.min(s.pos, total) / total) * 100)}%"></span>`;
+    prog.innerHTML = `<span style="width:${total ? Math.round((Math.min(s.pos, total) / total) * 100) : 0}%"></span>`;
 
     if (s.pos >= total) {
       sub.textContent = s.review ? "Review round finished" : "Round finished";
@@ -1355,31 +1707,39 @@ ${(n.body || "").slice(0, 60000)}`;
         const r = document.createElement("button");
         r.className = "btn primary"; r.textContent = `Review the ${s.missed.length} I missed`;
         const missed = s.missed.slice();
-        r.onclick = () => startStudy(missed);
+        r.onclick = () => startStudy(s.src, missed);
         col.appendChild(r);
       }
       const again = document.createElement("button");
-      again.className = "btn" + (s.missed.length ? "" : " primary"); again.textContent = "Start over with all cards"; again.onclick = () => startStudy();
+      again.className = "btn" + (s.missed.length ? "" : " primary"); again.textContent = "Start over with all cards";
+      again.onclick = () => startStudy(s.src);
       const back = document.createElement("button");
-      back.className = "btn"; back.textContent = "Back to note"; back.onclick = () => { state.study = null; show("note"); renderNote(); };
+      back.className = "btn"; back.textContent = state.cardsOrigin === "decks" ? "Back to flashcards" : "Back to note";
+      back.onclick = leaveCards;
       col.append(again, back);
       body.appendChild(sum);
       return;
     }
 
-    const idx = s.deck[s.pos];
-    const card = c.cards[idx];
+    const entry = s.deck[s.pos];
+    const { note, card } = cardAt(entry);
     sub.textContent = `Card ${s.pos + 1} of ${total}` + (s.review ? ", reviewing missed cards" : "");
     body.appendChild(prog);
 
     const flash = document.createElement("div");
     flash.className = "flash";
-    flash.innerHTML = '<div class="flash-inner" id="flashBtn" role="button" tabindex="0"><span class="face"><span class="lbl"></span><span class="txt"></span><span class="tap"></span></span></div>';
+    flash.innerHTML = '<div class="flash-inner" id="flashBtn" role="button" tabindex="0"><span class="face"><span class="lbl"><span class="side"></span></span><span class="txt"></span><span class="tap"></span></span></div>';
     const inner = flash.querySelector(".flash-inner");
     const face = flash.querySelector(".face");
+    if (isSet) {
+      const srcEl = document.createElement("span");
+      srcEl.className = "src";
+      srcEl.textContent = note.title || "Untitled note";
+      face.querySelector(".lbl").appendChild(srcEl);
+    }
     const paintFace = () => {
       face.classList.toggle("is-answer", s.flipped);
-      face.querySelector(".lbl").textContent = s.flipped ? "Answer" : "Question";
+      face.querySelector(".side").textContent = s.flipped ? "Answer" : "Question";
       face.querySelector(".txt").innerHTML = cardText(s.flipped ? card.a : card.q);
       face.querySelector(".tap").textContent = s.flipped ? "Tap to see the question again" : "Tap the card to see the answer";
       face.scrollTop = 0;
@@ -1389,7 +1749,6 @@ ${(n.body || "").slice(0, 60000)}`;
     const actions = document.createElement("div");
     actions.className = "study-actions";
     body.appendChild(actions);
-
     const syncFaces = () => {
       paintFace();
       inner.setAttribute("aria-label", (s.flipped ? "Answer: " : "Question: ") + face.querySelector(".txt").textContent);
@@ -1431,22 +1790,25 @@ ${(n.body || "").slice(0, 60000)}`;
     sh.className = "linkbtn";
     sh.textContent = state.shuffle ? "Shuffle: on" : "Shuffle: off";
     sh.setAttribute("aria-pressed", state.shuffle ? "true" : "false");
-    sh.onclick = () => { state.shuffle = !state.shuffle; lsSet("penned.shuffle", state.shuffle ? "1" : "0"); startStudy(s.review ? s.deck : undefined); toast(state.shuffle ? "Cards shuffled" : "Cards back in order"); };
-    const regen = document.createElement("button");
-    regen.className = "linkbtn" + (state.regenArmed ? " armed" : "");
-    regen.textContent = state.regenArmed ? "Tap again to replace these cards" : "Make new cards";
-    regen.onclick = () => {
-      if (!state.regenArmed) { state.regenArmed = true; renderCards(); setTimeout(() => { if (state.regenArmed) { state.regenArmed = false; if (state.view === "cards") renderCards(); } }, 4000); return; }
-      generateCards();
-    };
+    sh.onclick = () => { state.shuffle = !state.shuffle; lsSet("penned.shuffle", state.shuffle ? "1" : "0"); startStudy(s.src, s.review ? s.deck : undefined); toast(state.shuffle ? "Cards shuffled" : "Cards back in order"); };
     const ed = document.createElement("button");
     ed.className = "linkbtn";
-    ed.textContent = "Edit cards";
-    ed.onclick = () => openCardEditor(idx);
-    extra.append(sh, ed, regen);
+    ed.textContent = isSet ? "Edit this card" : "Edit cards";
+    ed.onclick = () => openCardEditor(entry.n, entry.i);
+    extra.append(sh, ed);
+    if (!isSet && state.current && state.current.id === s.src.id) {
+      const regen = document.createElement("button");
+      regen.className = "linkbtn" + (state.regenArmed ? " armed" : "");
+      regen.textContent = state.regenArmed ? "Tap again to replace these cards" : "Make new cards";
+      regen.onclick = () => {
+        if (!state.regenArmed) { state.regenArmed = true; renderCards(); setTimeout(() => { if (state.regenArmed) { state.regenArmed = false; if (state.view === "cards") renderCards(); } }, 4000); return; }
+        generateCards();
+      };
+      extra.appendChild(regen);
+    }
     body.appendChild(extra);
 
-    if (c.cardsFrom && c.cardsFrom !== hash(c.body || "")) {
+    if (!isSet && note.cardsFrom && note.cardsFrom !== hash(note.body || "") && state.current && state.current.id === note.id) {
       const st = document.createElement("div");
       st.className = "stale";
       st.innerHTML = "<span>You’ve edited this note since these cards were made.</span>";
@@ -1459,24 +1821,121 @@ ${(n.body || "").slice(0, 60000)}`;
   function answer(knew) {
     const s = state.study;
     if (!s || !s.flipped) return;
-    const idx = s.deck[s.pos];
-    (knew ? s.known : s.missed).push(idx);
+    (knew ? s.known : s.missed).push(s.deck[s.pos]);
     s.pos++;
     s.flipped = false;
     state.regenArmed = false;
     renderCards();
     window.scrollTo(0, 0);
   }
-  function openCardEditor(focusIndex) {
-    const c = state.current;
-    if (!c) return;
-    state.cardEdit = {
-      draft: (c.cards || []).map((x) => ({ q: x.q, a: x.a })),
-      original: JSON.stringify((c.cards || []).map((x) => ({ q: x.q, a: x.a }))),
-      focus: typeof focusIndex === "number" ? focusIndex : null,
-      invalid: -1
+
+  /* ---------- Import flashcards ---------- */
+  const AI_TAG = /^created using ai\.?$/i;
+  function parseFlashcardText(text) {
+    let lines = text.replace(/\r/g, "").split("\n").map((l) => l.replace(/\s+$/, "")).filter((l) => l.trim() && !AI_TAG.test(l.trim()));
+    let title = "";
+    if (lines.length && /^\s*\d+\s*[:.]\s+\S/.test(lines[0])) title = lines.shift().trim();
+    const tabbed = lines.filter((l) => l.includes("\t")).length;
+    const cards = [];
+    if (lines.length && tabbed >= lines.length * 0.6) {
+      for (const l of lines) {
+        const i = l.indexOf("\t");
+        if (i < 0) { if (!title && !cards.length) title = l.trim(); continue; }
+        cards.push({ q: l.slice(0, i).trim(), a: l.slice(i + 1).trim() });
+      }
+    } else {
+      if (!title && lines.length % 2 === 1) title = lines.shift().trim();
+      for (let i = 0; i + 1 < lines.length; i += 2) cards.push({ q: lines[i].trim(), a: lines[i + 1].trim() });
+    }
+    const seen = new Set();
+    const unique = sanitizeCards(cards).filter((c) => {
+      const k = c.q.toLowerCase() + "\u0001" + c.a.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    return { title, cards: unique, oddLine: lines.length % 2 === 1 && tabbed < lines.length * 0.6 };
+  }
+  function cardsToBody(cards) {
+    return cards.map((c) => `- **${c.q.replace(/\*/g, "")}**\n  ${c.a}`).join("\n");
+  }
+  function renderImport() {
+    const box = $("#deckImport");
+    const on = !!state.importing;
+    box.hidden = !on;
+    $("#deckMain").hidden = on;
+    if (!on) return;
+    const im = state.importing;
+    box.innerHTML = `
+      <h3>Import flashcards</h3>
+      <p>Paste cards below or choose a text file. Put each question or term on one line and its answer on the next. Blank lines and “Created using AI” lines are skipped, and tab-separated exports (like Quizlet) work too.</p>
+      <label class="field"><span>Cards</span><textarea class="input imp-text" rows="8" spellcheck="false" placeholder="What is brand equity?&#10;The value created by a brand.&#10;&#10;Branding&#10;The process of endowing products and services with the power of a brand."></textarea></label>
+      <div class="row" style="margin:-.4rem 0 1rem"><button class="btn sm" type="button" id="impFileBtn">Choose a text file</button></div>
+      <input type="file" id="impFile" accept=".txt,.tsv,.csv,text/plain" hidden>
+      <label class="field"><span>Set name</span><input class="input imp-title" maxlength="200" placeholder="e.g. 10: Building Strong Brands"></label>
+      <label class="field"><span>Label (optional)</span><input class="input imp-label" maxlength="30" list="impLabels" placeholder="e.g. Marketing"></label>
+      <datalist id="impLabels"></datalist>
+      <p class="imp-preview hint" aria-live="polite"></p>
+      <div class="row"><button class="btn grow" type="button" id="impCancel">Cancel</button><button class="btn ink grow" type="button" id="impGo">Import</button></div>`;
+    const ta = box.querySelector(".imp-text"), ti = box.querySelector(".imp-title"), la = box.querySelector(".imp-label");
+    ta.value = im.text; ti.value = im.title; la.value = im.label;
+    const dl = box.querySelector("#impLabels");
+    for (const l of labelsFrom(state.notes)) { const o = document.createElement("option"); o.value = l.name; dl.appendChild(o); }
+    const preview = () => {
+      const r = parseFlashcardText(ta.value);
+      if (r.title && !im.titleTouched) { ti.value = r.title; im.title = r.title; }
+      const p = box.querySelector(".imp-preview");
+      if (!ta.value.trim()) p.textContent = "";
+      else if (!r.cards.length) p.textContent = "No cards found yet. Each card needs a question line followed by an answer line.";
+      else p.textContent = `Found ${r.cards.length} ${r.cards.length === 1 ? "card" : "cards"}. First one: “${r.cards[0].q}” → “${r.cards[0].a}”` + (r.oddLine ? " One line had no answer and was skipped; check the cards look right after importing." : "");
+      box.querySelector("#impGo").disabled = !r.cards.length;
     };
-    if (!state.cardEdit.draft.length) { state.cardEdit.draft.push({ q: "", a: "" }); state.cardEdit.focus = 0; }
+    ta.oninput = () => { im.text = ta.value; preview(); };
+    ti.oninput = () => { im.title = ti.value; im.titleTouched = !!ti.value.trim(); };
+    la.oninput = () => { im.label = la.value; };
+    box.querySelector("#impFileBtn").onclick = () => box.querySelector("#impFile").click();
+    box.querySelector("#impFile").onchange = async (e) => {
+      const f = e.target.files && e.target.files[0];
+      e.target.value = "";
+      if (!f) return;
+      try { ta.value = await f.text(); } catch { toast("That file couldn’t be opened."); return; }
+      im.text = ta.value;
+      if (!im.titleTouched) { im.title = ""; }
+      const r = parseFlashcardText(ta.value);
+      if (!r.title && !im.titleTouched) { ti.value = f.name.replace(/\.[^.]+$/, ""); im.title = ti.value; }
+      preview();
+    };
+    box.querySelector("#impCancel").onclick = () => { state.importing = null; renderDecks(); };
+    box.querySelector("#impGo").onclick = () => {
+      const r = parseFlashcardText(ta.value);
+      if (!r.cards.length) return;
+      const title = (ti.value.trim() || r.title || "Imported flashcards").slice(0, 200);
+      if (state.notes.some((n) => (n.title || "").toLowerCase() === title.toLowerCase()) &&
+          !window.confirm(`You already have a note called “${title}”. Import this as a separate set anyway?`)) return;
+      const label = canonicalLabel(la.value);
+      const body = cardsToBody(r.cards);
+      const note = { id: newId(), title, body, createdAt: Date.now(), pages: 0, cards: r.cards, cardsFrom: hash(body) };
+      if (label) note.labels = [label];
+      const ok = saveNote(note);
+      state.importing = null;
+      if (label) state.decksLabel = label;
+      renderDecks();
+      toast(ok ? `Imported ${r.cards.length} cards into “${title}”` : "Imported, but this browser couldn’t save it.");
+    };
+    preview();
+    if (!ta.value) requestAnimationFrame(() => ta.focus({ preventScroll: true }));
+  }
+
+  /* ---------- Card editor ---------- */
+  function openCardEditor(noteId, focusIndex) {
+    const n = noteById(noteId);
+    if (!n) return;
+    const cards = (n.cards || []).map((x) => ({ q: x.q, a: x.a }));
+    state.cardEdit = {
+      noteId, draft: cards, original: JSON.stringify(cards),
+      focus: typeof focusIndex === "number" ? focusIndex : null, invalid: -1
+    };
+    if (!cards.length) { state.cardEdit.draft.push({ q: "", a: "" }); state.cardEdit.focus = 0; }
     state.regenArmed = false;
     show("cards");
     renderCards();
@@ -1527,22 +1986,19 @@ ${(n.body || "").slice(0, 60000)}`;
     add.textContent = "Add a card";
     add.onclick = () => { e.draft.push({ q: "", a: "" }); e.focus = e.draft.length - 1; renderCards(); };
     body.appendChild(add);
-
     if (!n) {
       const p = document.createElement("p");
       p.className = "hint";
       p.textContent = "Saving with no cards removes this note’s flashcards.";
       body.appendChild(p);
     }
-
     const tb = document.createElement("div");
     tb.className = "toolbar";
     const cancel = document.createElement("button");
     cancel.className = "btn wide"; cancel.textContent = "Cancel";
     cancel.onclick = () => {
       if (!closeCardEditor(false)) return;
-      if (state.study && state.current.cards && state.current.cards.length) renderCards();
-      else { show("note"); renderNote(); }
+      if (state.study) renderCards(); else leaveCards();
     };
     const save = document.createElement("button");
     save.className = "btn ink wide"; save.textContent = "Save cards";
@@ -1562,15 +2018,16 @@ ${(n.body || "").slice(0, 60000)}`;
     }
   }
   function saveCardEdits() {
-    const e = state.cardEdit, c = state.current;
-    if (!e || !c) return;
+    const e = state.cardEdit;
+    if (!e) return;
+    const saved = noteById(e.noteId);
+    if (!saved) { state.cardEdit = null; leaveCards(); return; }
     const cleaned = [];
     for (let i = 0; i < e.draft.length; i++) {
       const q = e.draft[i].q.trim(), a = e.draft[i].a.trim();
       if (!q && !a) continue;
       if (!q || !a) {
-        e.invalid = i;
-        e.focus = i;
+        e.invalid = i; e.focus = i;
         renderCards();
         toast(`Card ${i + 1} needs both a question and an answer.`);
         return;
@@ -1579,29 +2036,27 @@ ${(n.body || "").slice(0, 60000)}`;
     }
     const changed = cardEditDirty();
     state.cardEdit = null;
+    const target = (state.current && state.current.id === e.noteId) ? state.current : Object.assign({}, saved);
+    const src = state.study ? state.study.src : { type: "note", id: e.noteId };
     if (!cleaned.length) {
-      c.cards = [];
-      delete c.cardsFrom;
-      saveNote(c, false);
+      target.cards = [];
+      delete target.cardsFrom;
+      saveNote(target, false);
       toast("Flashcards removed from this note");
-      show("note");
-      renderNote();
+      if (src.type === "note" || !startStudy(src)) leaveCards();
       return;
     }
-    c.cards = cleaned;
-    if (!c.cardsFrom) c.cardsFrom = hash(c.body || "");
-    if (changed) saveNote(c, false);
+    target.cards = cleaned;
+    if (!target.cardsFrom) target.cardsFrom = hash(target.body || "");
+    if (changed) saveNote(target, false);
     toast(changed ? "Cards saved" : "No changes");
-    startStudy();
+    if (!startStudy(src)) leaveCards();
   }
 
   $("#btnCardsBack").onclick = () => {
     if (state.cardEdit && !closeCardEditor(false)) return;
     if (state.genCards && ctl) ctl.abort();
-    state.genCards = false;
-    state.study = null;
-    show("note");
-    renderNote();
+    leaveCards();
   };
   document.addEventListener("keydown", (e) => {
     if (state.view !== "cards" || state.cardEdit || !state.study || state.study.pos >= state.study.deck.length) return;
