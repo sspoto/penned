@@ -268,6 +268,13 @@ button.chip{cursor:pointer}
 .imp h3{margin:0 0 .35rem; font-size:1.1rem}
 .imp textarea.input{font-family:ui-monospace, "SF Mono", Menlo, monospace; font-size:.85rem; line-height:1.45; resize:vertical; min-height:10rem}
 #btnStudyAll{margin-bottom:1rem}
+.label-tools{display:flex; align-items:center; justify-content:space-between; column-gap:.9rem; row-gap:0; flex-wrap:wrap; margin:-.2rem 0 .7rem}
+.label-tools .linkbtn{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%}
+.deck-row{background:var(--surface); border:1px solid var(--line); border-radius:14px}
+.deck-row .note-item{border:0; background:transparent; border-radius:14px 14px 0 0; padding-bottom:.35rem}
+.deck-foot{display:flex; flex-wrap:wrap; gap:.35rem; align-items:center; padding:0 1rem .8rem}
+.deck-foot .note-labels{margin:0; width:100%}
+.linkbtn.sm{font-size:.82rem; padding:.2rem .1rem}
 
 .toast{position:fixed; left:50%; bottom:calc(5.5rem + env(safe-area-inset-bottom,0px)); transform:translate(-50%, 1rem); background:var(--ink); color:var(--bg); padding:.6rem 1rem; border-radius:999px; font-weight:600; font-size:.9rem; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:20; max-width:calc(100% - 2rem); text-align:center}
 .toast.show{opacity:1; transform:translate(-50%,0)}
@@ -378,6 +385,7 @@ button.chip{cursor:pointer}
       <button class="btn sm" id="btnImportCards">Import</button>
     </div>
     <div class="chip-row" id="deckFilter" role="group" aria-label="Filter by label" hidden></div>
+    <div class="label-tools" id="labelTools" hidden></div>
     <button class="btn primary big" id="btnStudyAll" hidden>Study all</button>
     <ul class="note-list" id="deckList"></ul>
     <div class="empty" id="decksEmpty" hidden>
@@ -458,7 +466,7 @@ button.chip{cursor:pointer}
         <button class="btn grow" id="btnExportText">Export all as readable text</button>
       </div>
     </div>
-    <p class="hint" style="text-align:center">Penned version 1.7</p>
+    <p class="hint" style="text-align:center">Penned version 1.8</p>
   </section>
 </main>
 
@@ -482,7 +490,7 @@ button.chip{cursor:pointer}
     view: "scan", pages: [], mode: "exact", notes: [], current: null, from: "notes",
     editing: false, streaming: false, query: "", memoryOnly: false, keyOk: null,
     study: null, genCards: false, genCount: 0, cardsError: "", shuffle: lsGetEarly("penned.shuffle") === "1", regenArmed: false, cardEdit: null,
-    notesLabel: null, decksLabel: null, labelInput: false, cardsOrigin: "note"
+    notesLabel: null, decksLabel: null, labelInput: false, cardsOrigin: "note", deckLabelEdit: null
   };
   function lsGetEarly(k) { try { return localStorage.getItem(k); } catch { return null; } }
   let ctl = null, deleteArmed = null;
@@ -605,6 +613,7 @@ button.chip{cursor:pointer}
     state.editing = false;
     state.labelInput = false;
     state.importing = null;
+    state.deckLabelEdit = null;
     deleteArmed = null;
   }
   function confirmDiscard() {
@@ -1281,7 +1290,7 @@ Rules:
   const NONE = "\u0000none";
   const LABEL_COLORS = ["#2B54D9", "#EA580C", "#16A34A", "#9333EA", "#DB2777", "#0D9488", "#CA8A04", "#64748B"];
   const labelColor = (l) => LABEL_COLORS[parseInt(hash(String(l).toLowerCase()), 36) % LABEL_COLORS.length];
-  const normLabel = (s) => String(s || "").replace(/\s+/g, " ").trim().slice(0, 30);
+  const normLabel = (s) => String(s || "").replace(/\s+/g, " ").trim().slice(0, 40);
   const hasLabel = (n, l) => (n.labels || []).some((x) => x.toLowerCase() === l.toLowerCase());
   function labelsFrom(notes) {
     const m = new Map();
@@ -1355,63 +1364,76 @@ Rules:
     return hit ? hit.name : null;
   }
 
-  // Labels on the open note
-  function renderNoteLabels() {
-    const c = state.current, row = $("#noteLabels");
-    row.hidden = !c || !c.id || state.streaming;
-    if (row.hidden) return;
+  // Shared label editor: works for any note by id (note view and Cards tab)
+  function labelsOf(id) {
+    if (state.current && state.current.id === id) return state.current.labels || [];
+    const n = noteById(id);
+    return (n && n.labels) || [];
+  }
+  function updateNoteLabels(id, fn) {
+    const n = noteById(id);
+    if (!n) return false;
+    const target = (state.current && state.current.id === id) ? state.current : Object.assign({}, n);
+    const next = sanitizeLabels(fn([...(target.labels || n.labels || [])]));
+    if (next.length) target.labels = next; else delete target.labels;
+    saveNote(target, false);
+    return true;
+  }
+  function addLabelTo(id, raw) {
+    const l = canonicalLabel(raw);
+    if (!l) return;
+    const cur = labelsOf(id);
+    if (cur.some((x) => x.toLowerCase() === l.toLowerCase())) { toast(`Already labeled “${l}”`); return; }
+    if (cur.length >= 12) { toast("A note can have up to 12 labels."); return; }
+    updateNoteLabels(id, (ls) => [...ls, l]);
+  }
+  function removeLabelFrom(id, l) {
+    updateNoteLabels(id, (ls) => ls.filter((x) => x.toLowerCase() !== l.toLowerCase()));
+  }
+  function renderLabelEditor(row, id, open, setOpen) {
     row.innerHTML = "";
-    for (const l of (c.labels || [])) row.appendChild(makeChip(l, { onRemove: () => removeLabel(l) }));
-    if (!state.labelInput) {
+    const cur = labelsOf(id);
+    for (const l of cur) row.appendChild(makeChip(l, { onRemove: () => { removeLabelFrom(id, l); setOpen(open); } }));
+    if (!open) {
       const add = document.createElement("button");
       add.type = "button";
       add.className = "chip add";
-      add.textContent = (c.labels && c.labels.length) ? "+ Label" : "+ Add a label";
-      add.onclick = () => { state.labelInput = true; renderNoteLabels(); };
+      add.textContent = cur.length ? "+ Label" : "+ Add a label";
+      add.onclick = (e) => { e.stopPropagation(); setOpen(true); };
       row.appendChild(add);
       return;
     }
     const wrap = document.createElement("div");
     wrap.className = "label-add";
-    wrap.innerHTML = '<input class="input" maxlength="30" placeholder="Label name" aria-label="Label name" autocapitalize="sentences" enterkeyhint="done"><button class="btn sm ink" type="button">Add</button><button class="linkbtn" type="button">Done</button>';
+    wrap.innerHTML = '<input class="input" maxlength="40" placeholder="Label name" aria-label="Label name" autocapitalize="sentences" enterkeyhint="done"><button class="btn sm ink" type="button">Add</button><button class="linkbtn" type="button">Done</button>';
     const input = wrap.querySelector("input");
-    const commit = () => { const v = input.value; if (normLabel(v)) { addLabel(v); } };
+    const commit = () => { if (normLabel(input.value)) { addLabelTo(id, input.value); setOpen(true); } };
     wrap.querySelector(".btn").onclick = commit;
-    wrap.querySelector(".linkbtn").onclick = () => { state.labelInput = false; renderNoteLabels(); };
+    wrap.querySelector(".linkbtn").onclick = () => setOpen(false);
     input.onkeydown = (e) => {
-      if (e.key === "Enter") { e.preventDefault(); if (normLabel(input.value)) commit(); else { state.labelInput = false; renderNoteLabels(); } }
-      else if (e.key === "Escape") { state.labelInput = false; renderNoteLabels(); }
+      if (e.key === "Enter") { e.preventDefault(); if (normLabel(input.value)) commit(); else setOpen(false); }
+      else if (e.key === "Escape") setOpen(false);
     };
     row.appendChild(wrap);
-    const suggestions = labelsFrom(state.notes).filter((l) => !hasLabel(c, l.name));
+    const suggestions = labelsFrom(state.notes).filter((l) => !cur.some((x) => x.toLowerCase() === l.name.toLowerCase()));
     if (suggestions.length) {
       const sug = document.createElement("div");
       sug.className = "suggest";
       const t = document.createElement("span");
       t.className = "lab"; t.textContent = "Your labels";
       sug.appendChild(t);
-      for (const l of suggestions) sug.appendChild(makeChip(l.name, { onClick: () => addLabel(l.name) }));
+      for (const l of suggestions) sug.appendChild(makeChip(l.name, { onClick: () => { addLabelTo(id, l.name); setOpen(true); } }));
       row.appendChild(sug);
     }
     requestAnimationFrame(() => input.focus({ preventScroll: true }));
   }
-  function addLabel(raw) {
-    const c = state.current;
-    if (!c) return;
-    const l = canonicalLabel(raw);
-    if (!l) return;
-    if (hasLabel(c, l)) { toast(`Already labeled “${l}”`); renderNoteLabels(); return; }
-    if ((c.labels || []).length >= 12) { toast("A note can have up to 12 labels."); return; }
-    c.labels = [...(c.labels || []), l];
-    saveNote(c, false);
-    renderNoteLabels();
-  }
-  function removeLabel(l) {
-    const c = state.current;
-    if (!c) return;
-    c.labels = (c.labels || []).filter((x) => x.toLowerCase() !== l.toLowerCase());
-    saveNote(c, false);
-    renderNoteLabels();
+
+  // Labels on the open note
+  function renderNoteLabels() {
+    const c = state.current, row = $("#noteLabels");
+    row.hidden = !c || !c.id || state.streaming || !noteById(c.id);
+    if (row.hidden) return;
+    renderLabelEditor(row, c.id, state.labelInput, (v) => { state.labelInput = v; renderNoteLabels(); });
   }
 
   // Label manager (Settings)
@@ -1420,7 +1442,7 @@ Rules:
     box.innerHTML = "";
     const labels = labelsFrom(state.notes);
     $("#labelsInfo").textContent = labels.length
-      ? "Rename or delete a label everywhere it’s used. To label a note, open it and tap “+ Label”."
+      ? "Rename or delete a label everywhere it’s used. To change a note’s labels, open it and tap “+ Label”, or use “Change labels” on any set in the Cards tab."
       : "You haven’t made any labels yet. Open a note and tap “+ Add a label”.";
     for (const l of labels) {
       const row = document.createElement("div");
@@ -1448,6 +1470,12 @@ Rules:
     }
     persist();
   }
+  function refreshLabelViews() {
+    renderLabelManager();
+    if (state.view === "decks") renderDecks();
+    if (state.view === "notes") renderNotes();
+    if (state.view === "note") renderNoteLabels();
+  }
   function renameLabel(old) {
     const input = window.prompt(`Rename the label “${old}” to:`, old);
     if (input === null) return;
@@ -1457,14 +1485,14 @@ Rules:
     const target = existing ? existing.name : name;
     applyToAllNotes((ls) => ls.map((x) => x.toLowerCase() === old.toLowerCase() ? target : x));
     for (const k of ["notesLabel", "decksLabel"]) if (state[k] && state[k] !== NONE && state[k].toLowerCase() === old.toLowerCase()) state[k] = target;
-    renderLabelManager();
+    refreshLabelViews();
     toast(existing ? `Merged into “${target}”` : `Renamed to “${target}”`);
   }
   function deleteLabelEverywhere(name, count) {
     if (!window.confirm(`Remove the label “${name}” from ${count} ${count === 1 ? "note" : "notes"}? The notes themselves stay.`)) return;
     applyToAllNotes((ls) => ls.filter((x) => x.toLowerCase() !== name.toLowerCase()));
     for (const k of ["notesLabel", "decksLabel"]) if (state[k] && state[k] !== NONE && state[k].toLowerCase() === name.toLowerCase()) state[k] = null;
-    renderLabelManager();
+    refreshLabelViews();
     toast(`Label “${name}” deleted`);
   }
 
@@ -1530,30 +1558,56 @@ ${(n.body || "").slice(0, 60000)}`;
     state.decksLabel = validFilter(state.decksLabel, decks);
     const f = state.decksLabel;
     renderFilterRow($("#deckFilter"), decks, f, (pick) => { state.decksLabel = pick; renderDecks(); });
-    const visible = decks.filter((n) => matchLabel(n, f));
-    const total = visible.reduce((s, n) => s + n.cards.length, 0);
+    const visible = decks.filter((n) => matchLabel(n, f) || n.id === state.deckLabelEdit);
+    const total = visible.filter((n) => matchLabel(n, f)).reduce((s, n) => s + n.cards.length, 0);
     const list = $("#deckList");
+    const tools = $("#labelTools");
+    tools.hidden = !f || f === NONE;
+    if (!tools.hidden) {
+      tools.innerHTML = "";
+      const ren = document.createElement("button");
+      ren.className = "linkbtn"; ren.textContent = `Rename “${f}”`;
+      ren.onclick = () => renameLabel(f);
+      const count = labelsFrom(state.notes).find((x) => x.name.toLowerCase() === f.toLowerCase());
+      const del = document.createElement("button");
+      del.className = "linkbtn danger"; del.textContent = "Remove label";
+      del.onclick = () => deleteLabelEverywhere(f, count ? count.count : 0);
+      tools.append(ren, del);
+    }
     list.innerHTML = "";
     const studyAll = $("#btnStudyAll");
-    studyAll.hidden = visible.length < 2;
+    studyAll.hidden = visible.filter((n) => matchLabel(n, f)).length < 2;
     studyAll.textContent = !f ? `Study all ${total} cards` : f === NONE ? `Study all ${total} unlabeled cards` : `Study all ${total} cards in “${f}”`;
     studyAll.onclick = () => { state.cardsOrigin = "decks"; state.current = null; startStudy({ type: "set", label: f }); };
     for (const n of visible) {
       const li = document.createElement("li");
+      li.className = "deck-row";
       const b = document.createElement("button");
       b.className = "note-item";
       b.innerHTML = '<span class="t"></span><span class="d"></span>';
       b.querySelector(".t").textContent = n.title || "Untitled note";
       const stale = n.cardsFrom && n.cardsFrom !== hash(n.body || "");
       b.querySelector(".d").textContent = `${n.cards.length} ${n.cards.length === 1 ? "card" : "cards"}` + (stale ? ", note edited since" : "");
-      if (n.labels && n.labels.length) {
-        const labs = document.createElement("span");
-        labs.className = "labs";
-        for (const l of n.labels) labs.appendChild(makeChip(l, { small: true }));
-        b.appendChild(labs);
-      }
-      b.onclick = () => { state.cardsOrigin = "decks"; state.current = Object.assign({}, n); startStudy({ type: "note", id: n.id }); };
+      b.onclick = () => { state.deckLabelEdit = null; state.cardsOrigin = "decks"; state.current = Object.assign({}, n); startStudy({ type: "note", id: n.id }); };
       li.appendChild(b);
+      const foot = document.createElement("div");
+      foot.className = "deck-foot";
+      if (state.deckLabelEdit === n.id) {
+        const ed = document.createElement("div");
+        ed.className = "note-labels";
+        renderLabelEditor(ed, n.id, true, (open) => { state.deckLabelEdit = open ? n.id : null; renderDecks(); });
+        foot.appendChild(ed);
+      } else {
+        for (const l of (n.labels || [])) foot.appendChild(makeChip(l, { small: true }));
+        const eb = document.createElement("button");
+        eb.type = "button";
+        eb.className = "linkbtn sm";
+        eb.textContent = (n.labels && n.labels.length) ? "Change labels" : "Add a label";
+        eb.setAttribute("aria-label", `Change labels for ${n.title || "this set"}`);
+        eb.onclick = () => { state.deckLabelEdit = n.id; renderDecks(); };
+        foot.appendChild(eb);
+      }
+      li.appendChild(foot);
       list.appendChild(li);
     }
     $("#decksEmpty").hidden = decks.length > 0;
@@ -1886,7 +1940,7 @@ ${(n.body || "").slice(0, 60000)}`;
       <div class="row" style="margin:-.4rem 0 1rem"><button class="btn sm" type="button" id="impFileBtn">Choose a text file</button></div>
       <input type="file" id="impFile" hidden>
       <label class="field"><span>Set name</span><input class="input imp-title" maxlength="200" placeholder="e.g. 10: Building Strong Brands"></label>
-      <label class="field"><span>Label (optional)</span><input class="input imp-label" maxlength="30" list="impLabels" placeholder="e.g. Marketing"></label>
+      <label class="field"><span>Label (optional)</span><input class="input imp-label" maxlength="40" list="impLabels" placeholder="e.g. Marketing"></label>
       <datalist id="impLabels"></datalist>
       <p class="imp-preview hint" aria-live="polite"></p>
       <div class="row"><button class="btn grow" type="button" id="impCancel">Cancel</button><button class="btn ink grow" type="button" id="impGo">Import</button></div>`;
