@@ -275,6 +275,12 @@ button.chip{cursor:pointer}
 .deck-foot{display:flex; flex-wrap:wrap; gap:.35rem; align-items:center; padding:0 1rem .8rem}
 .deck-foot .note-labels{margin:0; width:100%}
 .linkbtn.sm{font-size:.82rem; padding:.2rem .1rem}
+.face-labels{display:flex; flex-wrap:wrap; gap:.3rem; margin-bottom:.5rem}
+.face-labels[hidden]{display:none}
+.card-labels{margin-top:1rem}
+.card-labels h3{margin:0 0 .6rem; font-size:.95rem}
+.card-labels .note-labels{margin-bottom:.4rem}
+.ce-labels{margin:.6rem 0 0}
 
 .toast{position:fixed; left:50%; bottom:calc(5.5rem + env(safe-area-inset-bottom,0px)); transform:translate(-50%, 1rem); background:var(--ink); color:var(--bg); padding:.6rem 1rem; border-radius:999px; font-weight:600; font-size:.9rem; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:20; max-width:calc(100% - 2rem); text-align:center}
 .toast.show{opacity:1; transform:translate(-50%,0)}
@@ -466,7 +472,7 @@ button.chip{cursor:pointer}
         <button class="btn grow" id="btnExportText">Export all as readable text</button>
       </div>
     </div>
-    <p class="hint" style="text-align:center">Penned version 1.8</p>
+    <p class="hint" style="text-align:center">Penned version 1.9</p>
   </section>
 </main>
 
@@ -490,7 +496,7 @@ button.chip{cursor:pointer}
     view: "scan", pages: [], mode: "exact", notes: [], current: null, from: "notes",
     editing: false, streaming: false, query: "", memoryOnly: false, keyOk: null,
     study: null, genCards: false, genCount: 0, cardsError: "", shuffle: lsGetEarly("penned.shuffle") === "1", regenArmed: false, cardEdit: null,
-    notesLabel: null, decksLabel: null, labelInput: false, cardsOrigin: "note", deckLabelEdit: null
+    notesLabel: null, decksLabel: null, labelInput: false, cardsOrigin: "note", deckLabelEdit: null, cardLabelOpen: false
   };
   function lsGetEarly(k) { try { return localStorage.getItem(k); } catch { return null; } }
   let ctl = null, deleteArmed = null;
@@ -1292,12 +1298,22 @@ Rules:
   const labelColor = (l) => LABEL_COLORS[parseInt(hash(String(l).toLowerCase()), 36) % LABEL_COLORS.length];
   const normLabel = (s) => String(s || "").replace(/\s+/g, " ").trim().slice(0, 40);
   const hasLabel = (n, l) => (n.labels || []).some((x) => x.toLowerCase() === l.toLowerCase());
+  function allLabelsOfNote(n) {
+    const out = [...(n.labels || [])];
+    for (const c of (n.cards || [])) for (const l of (c.labels || [])) out.push(l);
+    return out;
+  }
   function labelsFrom(notes) {
     const m = new Map();
-    for (const n of notes) for (const l of (n.labels || [])) {
-      const k = l.toLowerCase();
-      const e = m.get(k);
-      if (e) e.count++; else m.set(k, { name: l, count: 1 });
+    for (const n of notes) {
+      const seen = new Set();
+      for (const l of allLabelsOfNote(n)) {
+        const k = l.toLowerCase();
+        if (seen.has(k)) continue;
+        seen.add(k);
+        const e = m.get(k);
+        if (e) e.count++; else m.set(k, { name: l, count: 1 });
+      }
     }
     return [...m.values()].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
   }
@@ -1317,7 +1333,11 @@ Rules:
     }
     return out.slice(0, 12);
   }
-  const matchLabel = (n, f) => !f ? true : f === NONE ? !(n.labels && n.labels.length) : hasLabel(n, f);
+  const cardHas = (c, l) => (c.labels || []).some((x) => x.toLowerCase() === l.toLowerCase());
+  const noteHasAnyLabel = (n) => !!((n.labels && n.labels.length) || (n.cards || []).some((c) => c.labels && c.labels.length));
+  const matchLabel = (n, f) => !f ? true : f === NONE ? !noteHasAnyLabel(n) : hasLabel(n, f) || (n.cards || []).some((c) => cardHas(c, f));
+  const cardMatches = (n, c, f) => !f ? true : f === NONE ? !((n.labels && n.labels.length) || (c.labels && c.labels.length)) : hasLabel(n, f) || cardHas(c, f);
+  const countCards = (notes, f) => notes.reduce((s, n) => s + (n.cards || []).filter((c) => cardMatches(n, c, f)).length, 0);
   const filterName = (f) => !f ? "All" : f === NONE ? "No label" : f;
 
   function makeChip(label, opts = {}) {
@@ -1347,19 +1367,20 @@ Rules:
     }
     return el;
   }
-  function renderFilterRow(container, notes, selected, onPick, totalText) {
+  function renderFilterRow(container, notes, selected, onPick, countFn) {
     container.innerHTML = "";
     const labels = labelsFrom(notes);
-    const unlabeled = notes.filter((n) => !(n.labels && n.labels.length)).length;
+    const count = countFn || ((f) => notes.filter((n) => matchLabel(n, f)).length);
+    const unlabeled = count(NONE);
     container.hidden = !labels.length;
     if (!labels.length) return;
-    container.appendChild(makeChip(null, { text: "All", count: notes.length, selected: !selected, onClick: () => onPick(null), plain: true }));
-    for (const l of labels) container.appendChild(makeChip(l.name, { count: l.count, selected: selected && selected !== NONE && selected.toLowerCase() === l.name.toLowerCase(), onClick: () => onPick(l.name) }));
+    container.appendChild(makeChip(null, { text: "All", count: count(null), selected: !selected, onClick: () => onPick(null), plain: true }));
+    for (const l of labels) container.appendChild(makeChip(l.name, { count: count(l.name), selected: selected && selected !== NONE && selected.toLowerCase() === l.name.toLowerCase(), onClick: () => onPick(l.name) }));
     if (unlabeled) container.appendChild(makeChip(NONE, { count: unlabeled, selected: selected === NONE, onClick: () => onPick(NONE) }));
   }
-  function validFilter(f, notes) {
+  function validFilter(f, notes, countFn) {
     if (!f) return null;
-    if (f === NONE) return notes.some((n) => !(n.labels && n.labels.length)) ? NONE : null;
+    if (f === NONE) return (countFn ? countFn(NONE) : notes.filter((n) => matchLabel(n, NONE)).length) ? NONE : null;
     const hit = labelsFrom(notes).find((x) => x.name.toLowerCase() === f.toLowerCase());
     return hit ? hit.name : null;
   }
@@ -1390,16 +1411,16 @@ Rules:
   function removeLabelFrom(id, l) {
     updateNoteLabels(id, (ls) => ls.filter((x) => x.toLowerCase() !== l.toLowerCase()));
   }
-  function renderLabelEditor(row, id, open, setOpen) {
+  // Generic picker: shows chips with ×, and an add box with suggestions when open
+  function renderLabelPicker(row, labels, o) {
     row.innerHTML = "";
-    const cur = labelsOf(id);
-    for (const l of cur) row.appendChild(makeChip(l, { onRemove: () => { removeLabelFrom(id, l); setOpen(open); } }));
-    if (!open) {
+    for (const l of labels) row.appendChild(makeChip(l, { small: o.small, onRemove: () => o.remove(l) }));
+    if (!o.open) {
       const add = document.createElement("button");
       add.type = "button";
-      add.className = "chip add";
-      add.textContent = cur.length ? "+ Label" : "+ Add a label";
-      add.onclick = (e) => { e.stopPropagation(); setOpen(true); };
+      add.className = "chip add" + (o.small ? " sm" : "");
+      add.textContent = labels.length ? "+ Label" : (o.addText || "+ Add a label");
+      add.onclick = (e) => { e.stopPropagation(); o.setOpen(true); };
       row.appendChild(add);
       return;
     }
@@ -1407,25 +1428,52 @@ Rules:
     wrap.className = "label-add";
     wrap.innerHTML = '<input class="input" maxlength="40" placeholder="Label name" aria-label="Label name" autocapitalize="sentences" enterkeyhint="done"><button class="btn sm ink" type="button">Add</button><button class="linkbtn" type="button">Done</button>';
     const input = wrap.querySelector("input");
-    const commit = () => { if (normLabel(input.value)) { addLabelTo(id, input.value); setOpen(true); } };
+    const commit = () => { if (normLabel(input.value)) o.add(input.value); };
     wrap.querySelector(".btn").onclick = commit;
-    wrap.querySelector(".linkbtn").onclick = () => setOpen(false);
+    wrap.querySelector(".linkbtn").onclick = () => o.setOpen(false);
     input.onkeydown = (e) => {
-      if (e.key === "Enter") { e.preventDefault(); if (normLabel(input.value)) commit(); else setOpen(false); }
-      else if (e.key === "Escape") setOpen(false);
+      if (e.key === "Enter") { e.preventDefault(); if (normLabel(input.value)) commit(); else o.setOpen(false); }
+      else if (e.key === "Escape") o.setOpen(false);
     };
     row.appendChild(wrap);
-    const suggestions = labelsFrom(state.notes).filter((l) => !cur.some((x) => x.toLowerCase() === l.name.toLowerCase()));
+    const suggestions = labelsFrom(state.notes).filter((l) => !labels.some((x) => x.toLowerCase() === l.name.toLowerCase()));
     if (suggestions.length) {
       const sug = document.createElement("div");
       sug.className = "suggest";
       const t = document.createElement("span");
       t.className = "lab"; t.textContent = "Your labels";
       sug.appendChild(t);
-      for (const l of suggestions) sug.appendChild(makeChip(l.name, { onClick: () => { addLabelTo(id, l.name); setOpen(true); } }));
+      for (const l of suggestions) sug.appendChild(makeChip(l.name, { onClick: () => o.add(l.name) }));
       row.appendChild(sug);
     }
     requestAnimationFrame(() => input.focus({ preventScroll: true }));
+  }
+  // Adds a label to a list, returning the new list (or null if nothing changed)
+  function withLabel(list, raw, max) {
+    const l = canonicalLabel(raw);
+    if (!l) return null;
+    if (list.some((x) => x.toLowerCase() === l.toLowerCase())) { toast(`Already labeled “${l}”`); return null; }
+    if (list.length >= max) { toast(`You can add up to ${max} labels here.`); return null; }
+    return [...list, l];
+  }
+  function renderLabelEditor(row, id, open, setOpen) {
+    renderLabelPicker(row, labelsOf(id), {
+      open, setOpen,
+      add: (raw) => { addLabelTo(id, raw); setOpen(true); },
+      remove: (l) => { removeLabelFrom(id, l); setOpen(open); }
+    });
+  }
+  // Labels on a single card, saved straight away
+  function updateCardLabels(noteId, i, fn) {
+    const n = noteById(noteId);
+    if (!n || !n.cards || !n.cards[i]) return false;
+    const target = (state.current && state.current.id === noteId) ? state.current : Object.assign({}, n);
+    const cards = (target.cards || n.cards).map((c) => Object.assign({}, c));
+    const next = sanitizeLabels(fn([...(cards[i].labels || [])]));
+    if (next.length) cards[i].labels = next; else delete cards[i].labels;
+    target.cards = cards;
+    saveNote(target, false);
+    return true;
   }
 
   // Labels on the open note
@@ -1442,7 +1490,7 @@ Rules:
     box.innerHTML = "";
     const labels = labelsFrom(state.notes);
     $("#labelsInfo").textContent = labels.length
-      ? "Rename or delete a label everywhere it’s used. To change a note’s labels, open it and tap “+ Label”, or use “Change labels” on any set in the Cards tab."
+      ? "Rename or delete a label everywhere it’s used, on notes, sets and individual cards. To label a whole set, use “Change labels” in the Cards tab; to label one card, tap “Label this card” while studying or use Edit cards."
       : "You haven’t made any labels yet. Open a note and tap “+ Add a label”.";
     for (const l of labels) {
       const row = document.createElement("div");
@@ -1463,10 +1511,22 @@ Rules:
       const before = JSON.stringify(n.labels || []);
       const next = sanitizeLabels(fn(n.labels || []));
       if (JSON.stringify(next) !== before) { if (next.length) n.labels = next; else delete n.labels; }
+      if (Array.isArray(n.cards)) {
+        n.cards = n.cards.map((c) => {
+          if (!c.labels) return c;
+          const cl = sanitizeLabels(fn(c.labels));
+          const out = { q: c.q, a: c.a };
+          if (cl.length) out.labels = cl;
+          return out;
+        });
+      }
     }
     if (state.current) {
       const fresh = state.notes.find((x) => x.id === state.current.id);
-      if (fresh) { if (fresh.labels) state.current.labels = fresh.labels.slice(); else delete state.current.labels; }
+      if (fresh) {
+        if (fresh.labels) state.current.labels = fresh.labels.slice(); else delete state.current.labels;
+        if (fresh.cards) state.current.cards = fresh.cards;
+      }
     }
     persist();
   }
@@ -1489,7 +1549,7 @@ Rules:
     toast(existing ? `Merged into “${target}”` : `Renamed to “${target}”`);
   }
   function deleteLabelEverywhere(name, count) {
-    if (!window.confirm(`Remove the label “${name}” from ${count} ${count === 1 ? "note" : "notes"}? The notes themselves stay.`)) return;
+    if (!window.confirm(`Remove the label “${name}” from everything that uses it (${count} ${count === 1 ? "note or set" : "notes and sets"})? The notes and cards themselves stay.`)) return;
     applyToAllNotes((ls) => ls.filter((x) => x.toLowerCase() !== name.toLowerCase()));
     for (const k of ["notesLabel", "decksLabel"]) if (state[k] && state[k] !== NONE && state[k].toLowerCase() === name.toLowerCase()) state[k] = null;
     refreshLabelViews();
@@ -1501,7 +1561,12 @@ Rules:
     if (!Array.isArray(arr)) return [];
     return arr
       .filter((c) => c && typeof c.q === "string" && typeof c.a === "string" && c.q.trim() && c.a.trim())
-      .map((c) => ({ q: c.q.trim().slice(0, 600), a: c.a.trim().slice(0, 1200) }))
+      .map((c) => {
+        const o = { q: c.q.trim().slice(0, 600), a: c.a.trim().slice(0, 1200) };
+        const ls = sanitizeLabels(c.labels);
+        if (ls.length) o.labels = ls;
+        return o;
+      })
       .slice(0, 500);
   }
   function parseCards(text) {
@@ -1533,11 +1598,11 @@ ${(n.body || "").slice(0, 60000)}`;
   function notesForSource(src) {
     const decks = deckNotes();
     if (src.type === "note") return decks.filter((n) => n.id === src.id);
-    return decks.filter((n) => matchLabel(n, src.label));
+    return decks.filter((n) => n.cards.some((c) => cardMatches(n, c, src.label)));
   }
   function buildDeck(src) {
     const out = [];
-    for (const n of notesForSource(src)) n.cards.forEach((_, i) => out.push({ n: n.id, i }));
+    for (const n of notesForSource(src)) n.cards.forEach((c, i) => { if (cardMatches(n, c, src.label)) out.push({ n: n.id, i }); });
     return out;
   }
   function cardAt(e) {
@@ -1555,11 +1620,13 @@ ${(n.body || "").slice(0, 60000)}`;
   function renderDecks() {
     renderImport();
     const decks = deckNotes();
-    state.decksLabel = validFilter(state.decksLabel, decks);
+    const cardCount = (lf) => countCards(decks, lf);
+    state.decksLabel = validFilter(state.decksLabel, decks, cardCount);
     const f = state.decksLabel;
-    renderFilterRow($("#deckFilter"), decks, f, (pick) => { state.decksLabel = pick; renderDecks(); });
-    const visible = decks.filter((n) => matchLabel(n, f) || n.id === state.deckLabelEdit);
-    const total = visible.filter((n) => matchLabel(n, f)).reduce((s, n) => s + n.cards.length, 0);
+    renderFilterRow($("#deckFilter"), decks, f, (pick) => { state.decksLabel = pick; renderDecks(); }, cardCount);
+    const matching = (n) => n.cards.filter((c) => cardMatches(n, c, f)).length;
+    const visible = decks.filter((n) => matching(n) > 0 || n.id === state.deckLabelEdit);
+    const total = cardCount(f);
     const list = $("#deckList");
     const tools = $("#labelTools");
     tools.hidden = !f || f === NONE;
@@ -1576,7 +1643,7 @@ ${(n.body || "").slice(0, 60000)}`;
     }
     list.innerHTML = "";
     const studyAll = $("#btnStudyAll");
-    studyAll.hidden = visible.filter((n) => matchLabel(n, f)).length < 2;
+    studyAll.hidden = !total || (!f && visible.length < 2);
     studyAll.textContent = !f ? `Study all ${total} cards` : f === NONE ? `Study all ${total} unlabeled cards` : `Study all ${total} cards in “${f}”`;
     studyAll.onclick = () => { state.cardsOrigin = "decks"; state.current = null; startStudy({ type: "set", label: f }); };
     for (const n of visible) {
@@ -1587,8 +1654,11 @@ ${(n.body || "").slice(0, 60000)}`;
       b.innerHTML = '<span class="t"></span><span class="d"></span>';
       b.querySelector(".t").textContent = n.title || "Untitled note";
       const stale = n.cardsFrom && n.cardsFrom !== hash(n.body || "");
-      b.querySelector(".d").textContent = `${n.cards.length} ${n.cards.length === 1 ? "card" : "cards"}` + (stale ? ", note edited since" : "");
-      b.onclick = () => { state.deckLabelEdit = null; state.cardsOrigin = "decks"; state.current = Object.assign({}, n); startStudy({ type: "note", id: n.id }); };
+      const m = matching(n), whole = m === n.cards.length;
+      const labeledCards = n.cards.filter((c) => c.labels && c.labels.length).length;
+      b.querySelector(".d").textContent = (whole ? `${n.cards.length} ${n.cards.length === 1 ? "card" : "cards"}` : `${m} of ${n.cards.length} cards`)
+        + (labeledCards ? `, ${labeledCards} with their own labels` : "") + (stale ? ", note edited since" : "");
+      b.onclick = () => { state.deckLabelEdit = null; state.cardsOrigin = "decks"; state.current = Object.assign({}, n); startStudy({ type: "note", id: n.id, label: whole ? null : f }); };
       li.appendChild(b);
       const foot = document.createElement("div");
       foot.className = "deck-foot";
@@ -1682,6 +1752,7 @@ ${(n.body || "").slice(0, 60000)}`;
     if (!deck.length) { toast("There are no flashcards here yet."); return false; }
     if (state.shuffle) deck = shuffled(deck);
     state.study = { src, deck, pos: 0, flipped: false, known: [], missed: [], review: !!order };
+    state.cardLabelOpen = false;
     state.genCards = false;
     state.cardsError = "";
     state.regenArmed = false;
@@ -1790,12 +1861,15 @@ ${(n.body || "").slice(0, 60000)}`;
 
     const entry = s.deck[s.pos];
     const { note, card } = cardAt(entry);
-    sub.textContent = `Card ${s.pos + 1} of ${total}` + (s.review ? ", reviewing missed cards" : "");
+    sub.textContent = `Card ${s.pos + 1} of ${total}` + (s.src.type === "note" && s.src.label ? `, only “${filterName(s.src.label)}” cards` : "") + (s.review ? ", reviewing missed cards" : "");
     body.appendChild(prog);
 
     const flash = document.createElement("div");
     flash.className = "flash";
-    flash.innerHTML = '<div class="flash-inner" id="flashBtn" role="button" tabindex="0"><span class="face"><span class="lbl"><span class="side"></span></span><span class="txt"></span><span class="tap"></span></span></div>';
+    flash.innerHTML = '<div class="flash-inner" id="flashBtn" role="button" tabindex="0"><span class="face"><span class="lbl"><span class="side"></span></span><span class="txt"></span><span class="face-labels"></span><span class="tap"></span></span></div>';
+    const fl = flash.querySelector(".face-labels");
+    for (const l of (card.labels || [])) fl.appendChild(makeChip(l, { small: true }));
+    fl.hidden = !(card.labels && card.labels.length);
     const inner = flash.querySelector(".flash-inner");
     const face = flash.querySelector(".face");
     if (isSet) {
@@ -1862,7 +1936,12 @@ ${(n.body || "").slice(0, 60000)}`;
     ed.className = "linkbtn";
     ed.textContent = isSet ? "Edit this card" : "Edit cards";
     ed.onclick = () => openCardEditor(entry.n, entry.i);
-    extra.append(sh, ed);
+    const lb = document.createElement("button");
+    lb.className = "linkbtn";
+    lb.textContent = "Label this card";
+    lb.setAttribute("aria-expanded", state.cardLabelOpen ? "true" : "false");
+    lb.onclick = () => { state.cardLabelOpen = !state.cardLabelOpen; renderCards(); };
+    extra.append(sh, lb, ed);
     if (!isSet && state.current && state.current.id === s.src.id) {
       const regen = document.createElement("button");
       regen.className = "linkbtn" + (state.regenArmed ? " armed" : "");
@@ -1874,6 +1953,29 @@ ${(n.body || "").slice(0, 60000)}`;
       extra.appendChild(regen);
     }
     body.appendChild(extra);
+
+    if (state.cardLabelOpen) {
+      const box = document.createElement("div");
+      box.className = "card card-labels";
+      const h3 = document.createElement("h3");
+      h3.textContent = "Labels on this card";
+      const row = document.createElement("div");
+      row.className = "note-labels";
+      box.append(h3, row);
+      renderLabelPicker(row, card.labels || [], {
+        open: true,
+        setOpen: (v) => { state.cardLabelOpen = v; renderCards(); },
+        add: (raw) => { const next = withLabel(card.labels || [], raw, 12); if (next) { updateCardLabels(entry.n, entry.i, () => next); } renderCards(); },
+        remove: (l) => { updateCardLabels(entry.n, entry.i, (ls) => ls.filter((x) => x.toLowerCase() !== l.toLowerCase())); renderCards(); }
+      });
+      const note2 = document.createElement("p");
+      note2.className = "hint";
+      note2.textContent = (note.labels && note.labels.length)
+        ? `This card is also part of the set’s labels: ${note.labels.join(", ")}.`
+        : "Card labels let you study just these cards from the Cards tab.";
+      box.appendChild(note2);
+      body.appendChild(box);
+    }
 
     if (!isSet && note.cardsFrom && note.cardsFrom !== hash(note.body || "") && state.current && state.current.id === note.id) {
       const st = document.createElement("div");
@@ -1889,6 +1991,7 @@ ${(n.body || "").slice(0, 60000)}`;
     const s = state.study;
     if (!s || !s.flipped) return;
     (knew ? s.known : s.missed).push(s.deck[s.pos]);
+    state.cardLabelOpen = false;
     s.pos++;
     s.flipped = false;
     state.regenArmed = false;
@@ -2023,12 +2126,12 @@ ${(n.body || "").slice(0, 60000)}`;
   function openCardEditor(noteId, focusIndex) {
     const n = noteById(noteId);
     if (!n) return;
-    const cards = (n.cards || []).map((x) => ({ q: x.q, a: x.a }));
+    const cards = (n.cards || []).map((x) => ({ q: x.q, a: x.a, labels: [...(x.labels || [])] }));
     state.cardEdit = {
       noteId, draft: cards, original: JSON.stringify(cards),
-      focus: typeof focusIndex === "number" ? focusIndex : null, invalid: -1
+      focus: typeof focusIndex === "number" ? focusIndex : null, invalid: -1, labelOpen: -1
     };
-    if (!cards.length) { state.cardEdit.draft.push({ q: "", a: "" }); state.cardEdit.focus = 0; }
+    if (!cards.length) { state.cardEdit.draft.push({ q: "", a: "", labels: [] }); state.cardEdit.focus = 0; }
     state.regenArmed = false;
     show("cards");
     renderCards();
@@ -2036,7 +2139,7 @@ ${(n.body || "").slice(0, 60000)}`;
   function cardEditDirty() {
     const e = state.cardEdit;
     if (!e) return false;
-    const now = JSON.stringify(e.draft.filter((x) => x.q.trim() || x.a.trim()).map((x) => ({ q: x.q.trim(), a: x.a.trim() })));
+    const now = JSON.stringify(e.draft.filter((x) => x.q.trim() || x.a.trim()).map((x) => ({ q: x.q.trim(), a: x.a.trim(), labels: x.labels || [] })));
     return now !== e.original;
   }
   function closeCardEditor(force) {
@@ -2055,8 +2158,17 @@ ${(n.body || "").slice(0, 60000)}`;
       box.className = "ce" + (e.invalid === i ? " invalid" : "");
       box.innerHTML = `<div class="ce-head"><span>Card ${i + 1}</span><button class="linkbtn danger" type="button">Delete</button></div>
         <label>Question<textarea rows="2" maxlength="600"></textarea></label>
-        <label>Answer<textarea rows="2" maxlength="1200"></textarea></label>`;
+        <label>Answer<textarea rows="2" maxlength="1200"></textarea></label>
+        <div class="ce-labels note-labels"></div>`;
       const [qa, aa] = box.querySelectorAll("textarea");
+      card.labels = card.labels || [];
+      renderLabelPicker(box.querySelector(".ce-labels"), card.labels, {
+        small: true, addText: "+ Label this card",
+        open: e.labelOpen === i,
+        setOpen: (v) => { e.labelOpen = v ? i : -1; renderCards(); },
+        add: (raw) => { const next = withLabel(card.labels, raw, 12); if (next) card.labels = next; e.labelOpen = i; renderCards(); },
+        remove: (l) => { card.labels = card.labels.filter((x) => x.toLowerCase() !== l.toLowerCase()); renderCards(); }
+      });
       qa.value = card.q; aa.value = card.a;
       const clearInvalid = () => { if (e.invalid === i) { e.invalid = -1; box.classList.remove("invalid"); } };
       qa.oninput = () => { card.q = qa.value; autoGrow(qa); clearInvalid(); };
@@ -2077,7 +2189,7 @@ ${(n.body || "").slice(0, 60000)}`;
     const add = document.createElement("button");
     add.className = "btn add-card";
     add.textContent = "Add a card";
-    add.onclick = () => { e.draft.push({ q: "", a: "" }); e.focus = e.draft.length - 1; renderCards(); };
+    add.onclick = () => { e.draft.push({ q: "", a: "", labels: [] }); e.focus = e.draft.length - 1; e.labelOpen = -1; renderCards(); };
     body.appendChild(add);
     if (!n) {
       const p = document.createElement("p");
@@ -2100,6 +2212,7 @@ ${(n.body || "").slice(0, 60000)}`;
     body.appendChild(tb);
 
     body.querySelectorAll(".ce textarea").forEach(autoGrow);
+    if (e.labelOpen >= 0) e.focus = null;
     if (e.focus !== null && e.focus < n) {
       const target = list.children[e.focus];
       e.focus = null;
@@ -2125,7 +2238,10 @@ ${(n.body || "").slice(0, 60000)}`;
         toast(`Card ${i + 1} needs both a question and an answer.`);
         return;
       }
-      cleaned.push({ q, a });
+      const item = { q, a };
+      const ls = sanitizeLabels(e.draft[i].labels);
+      if (ls.length) item.labels = ls;
+      cleaned.push(item);
     }
     const changed = cardEditDirty();
     state.cardEdit = null;
