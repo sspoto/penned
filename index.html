@@ -57,10 +57,11 @@ img{max-width:100%}
 [hidden]{display:none !important}
 
 .top{position:sticky; top:env(safe-area-inset-top,0px); z-index:5; background:var(--bg); border-bottom:1px solid var(--line)}
-.top-inner{max-width:40rem; margin:0 auto; padding:.6rem 1rem; display:flex; align-items:center; gap:.6rem}
+.top-inner{max-width:40rem; margin:0 auto; padding:.6rem 1rem; display:flex; align-items:center; gap:.5rem}
+@media (max-width:380px){ .logo{font-size:1.6rem} .tab{padding:.4rem .6rem; font-size:.85rem} }
 .logo{font-family:var(--hand); font-size:2rem; line-height:1; margin:0; font-weight:600}
 .tabs{margin-left:auto; display:flex; gap:.25rem; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:.2rem}
-.tab{border:0; background:transparent; padding:.4rem .85rem; border-radius:999px; font-weight:600; font-size:.9rem; color:var(--muted); display:flex; align-items:center; gap:.4rem}
+.tab{white-space:nowrap; border:0; background:transparent; padding:.4rem .75rem; border-radius:999px; font-weight:600; font-size:.9rem; color:var(--muted); display:flex; align-items:center; gap:.4rem}
 .tab[aria-current="page"]{background:var(--ink); color:var(--bg)}
 .count{font-size:.75rem; font-weight:600; min-width:1.3rem; padding:0 .35rem; border-radius:999px; background:var(--accent-soft); color:var(--accent); text-align:center}
 .tab[aria-current="page"] .count{background:var(--bg); color:var(--ink)}
@@ -193,6 +194,34 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
 .card p{margin:0 0 .75rem; color:var(--muted); font-size:.9rem}
 .card a{color:var(--accent)}
 
+/* Flashcards */
+.cards-head{margin:.1rem 0 .9rem}
+.cards-head h2{font-size:1.3rem; line-height:1.25; margin:0; letter-spacing:-.01em; overflow-wrap:anywhere}
+.cards-head p{margin:.2rem 0 0; color:var(--muted); font-size:.9rem}
+.progress{height:6px; background:var(--line); border-radius:999px; overflow:hidden; margin-bottom:1rem}
+.progress span{display:block; height:100%; background:var(--accent); border-radius:999px; transition:width .25s}
+.flash{margin-bottom:1rem}
+.flash-inner{position:relative; display:block; cursor:pointer; -webkit-tap-highlight-color:transparent; width:100%; height:clamp(14rem, 46vh, 22rem); border-radius:18px}
+.flash-inner.turn{animation:turn .32s ease-in-out}
+@keyframes turn{0%{transform:scaleX(1)}50%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+.face{position:absolute; inset:0; display:flex; flex-direction:column; color:var(--ink); text-align:left; background:var(--surface); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:1.2rem 1.25rem; overflow:auto}
+.face.is-answer{border-color:var(--accent); box-shadow:inset 4px 0 0 var(--accent), var(--shadow)}
+.face .lbl{display:block; font-size:.8rem; font-weight:600; color:var(--muted)}
+.face.is-answer .lbl{color:var(--accent)}
+.face .txt{display:block; font-family:var(--serif); font-size:1.25rem; line-height:1.45; margin:auto 0; padding:.75rem 0; overflow-wrap:anywhere}
+.face .txt mark{background:var(--hl); color:inherit; border-radius:3px; padding:0 .2rem; font-family:var(--ui); font-size:.8em; font-weight:600}
+.face .tap{display:block; font-size:.82rem; color:var(--muted)}
+.study-actions{display:flex; gap:.6rem}
+.study-actions .btn{flex:1 1 0; min-height:3.3rem; font-size:1rem}
+.study-extra{display:flex; justify-content:space-between; gap:.5rem; margin-top:1rem; flex-wrap:wrap}
+.linkbtn{border:0; background:transparent; color:var(--accent); font-weight:600; font-size:.9rem; padding:.4rem .1rem}
+.linkbtn.armed{color:var(--danger)}
+.stale{display:flex; gap:.75rem; align-items:center; justify-content:space-between; flex-wrap:wrap; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:.7rem .9rem; margin-top:1rem; font-size:.88rem; color:var(--muted)}
+.summary h3{font-size:1.2rem; margin:0 0 .3rem}
+.summary .score{font-family:var(--serif); font-size:2.4rem; line-height:1.1; margin:.4rem 0 .2rem; color:var(--ink)}
+.summary .col{display:flex; flex-direction:column; gap:.55rem; margin-top:1rem}
+@media (prefers-reduced-motion: reduce){ .flash-inner.turn{animation:none} .progress span{transition:none} }
+
 .toast{position:fixed; left:50%; bottom:calc(5.5rem + env(safe-area-inset-bottom,0px)); transform:translate(-50%, 1rem); background:var(--ink); color:var(--bg); padding:.6rem 1rem; border-radius:999px; font-weight:600; font-size:.9rem; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:20; max-width:calc(100% - 2rem); text-align:center}
 .toast.show{opacity:1; transform:translate(-50%,0)}
 @media (prefers-reduced-motion: reduce){ .toast{transition:none} }
@@ -290,6 +319,20 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     <div class="toolbar" id="toolbar"></div>
   </section>
 
+  <section id="view-cards" hidden>
+    <div class="note-top">
+      <button class="back" id="btnCardsBack">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>
+        <span>Back to note</span>
+      </button>
+    </div>
+    <div class="cards-head">
+      <h2 id="cardsTitle"></h2>
+      <p id="cardsSub" aria-live="polite"></p>
+    </div>
+    <div id="cardsBody"></div>
+  </section>
+
   <section id="view-settings" hidden>
     <h2 class="set-h">Settings</h2>
     <p class="set-intro">Penned sends your photos straight from this phone to Claude using your own Anthropic API key. Nothing goes through any other server.</p>
@@ -332,7 +375,13 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
       <h3>Your notes</h3>
       <p id="storageInfo">Notes are saved in this browser on this device.</p>
       <div class="row">
-        <button class="btn grow" id="btnExport">Back up all notes</button>
+        <button class="btn ink grow" id="btnExport">Back up notes</button>
+        <button class="btn grow" id="btnRestore">Restore from backup</button>
+      </div>
+      <input type="file" id="fileRestore" accept=".json,application/json,text/plain" hidden>
+      <p class="hint">Backups are saved as a .json file, flashcards included. Keep it in Files or iCloud Drive, then use Restore on this or another device. Restoring adds the notes in the backup and keeps the newest version of any note you already have. Restore also accepts the older text backups and text exports.</p>
+      <div class="row" style="margin-top:.75rem">
+        <button class="btn grow" id="btnExportText">Export all as readable text</button>
       </div>
     </div>
   </section>
@@ -352,8 +401,10 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
 
   const state = {
     view: "scan", pages: [], mode: "exact", notes: [], current: null, from: "notes",
-    editing: false, streaming: false, query: "", memoryOnly: false, keyOk: null
+    editing: false, streaming: false, query: "", memoryOnly: false, keyOk: null,
+    study: null, genCards: false, genCount: 0, cardsError: "", shuffle: lsGetEarly("penned.shuffle") === "1", regenArmed: false
   };
+  function lsGetEarly(k) { try { return localStorage.getItem(k); } catch { return null; } }
   let ctl = null, deleteArmed = null;
 
   /* ---------- Local storage ---------- */
@@ -368,6 +419,7 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
     copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></svg>',
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3.5"/><path d="M7.5 8L12 3.5 16.5 8"/><path d="M6 11H5v9.5h14V11h-1"/></svg>',
+    cards: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7.5" width="13" height="12" rx="2"/><path d="M7.5 7.5V5.5a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/></svg>',
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7h15"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 12.5h9l1-12.5"/></svg>',
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
@@ -379,6 +431,7 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     try { return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(t)); }
     catch { return new Date(t).toLocaleString(); }
   };
+  const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   const slug = (s) => (s || "note").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "note";
   let toastTimer;
   function toast(msg) {
@@ -454,8 +507,9 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
   /* ---------- Views ---------- */
   function show(view) {
     state.view = view;
-    for (const v of ["scan", "notes", "note", "settings"]) $("#view-" + v).hidden = view !== v;
-    const notesTab = view === "notes" || (view === "note" && state.from === "notes");
+    for (const v of ["scan", "notes", "note", "cards", "settings"]) $("#view-" + v).hidden = view !== v;
+    const inNote = view === "note" || view === "cards";
+    const notesTab = view === "notes" || (inNote && state.from === "notes");
     const settingsTab = view === "settings";
     const scanTab = !notesTab && !settingsTab;
     $("#tabScan").toggleAttribute("aria-current", scanTab);
@@ -467,7 +521,9 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     window.scrollTo(0, 0);
   }
   function leaveNote() {
-    if (state.streaming && ctl) ctl.abort();
+    if ((state.streaming || state.genCards) && ctl) ctl.abort();
+    state.genCards = false;
+    state.study = null;
     state.editing = false;
     deleteArmed = null;
   }
@@ -730,8 +786,9 @@ Rules:
     state.memoryOnly = !ok;
     return ok;
   }
-  function saveNote(n) {
-    const rec = { id: n.id, title: n.title || "Untitled note", body: n.body || "", createdAt: n.createdAt || Date.now(), updatedAt: Date.now(), pages: n.pages || 0 };
+  function saveNote(n, touch = true) {
+    const rec = { id: n.id, title: n.title || "Untitled note", body: n.body || "", createdAt: n.createdAt || Date.now(), updatedAt: (touch || !n.updatedAt) ? Date.now() : n.updatedAt, pages: n.pages || 0 };
+    if (Array.isArray(n.cards) && n.cards.length) { rec.cards = n.cards; rec.cardsFrom = n.cardsFrom || ""; }
     n.updatedAt = rec.updatedAt;
     const i = state.notes.findIndex((x) => x.id === n.id);
     if (i >= 0) state.notes[i] = rec; else state.notes.unshift(rec);
@@ -839,6 +896,7 @@ Rules:
       return;
     }
     tb.appendChild(tbtn("Edit", I.edit, "", startEdit));
+    tb.appendChild(tbtn("Cards", I.cards, "", openCards));
     tb.appendChild(tbtn("Copy", I.copy, "", copyNote));
     tb.appendChild(tbtn("Share", I.share, "", shareNote));
     tb.appendChild(tbtn(deleteArmed ? "Tap to confirm" : "Delete", I.trash, deleteArmed ? "armed" : "danger", onDelete));
@@ -929,6 +987,7 @@ Rules:
     $("#btnRemoveKey").hidden = !key;
     $("#storageInfo").textContent = `${state.notes.length} ${state.notes.length === 1 ? "note is" : "notes are"} saved in this browser on this device. Clearing Safari’s website data deletes them, so back up now and then.`;
     $("#btnExport").disabled = !state.notes.length;
+    $("#btnExportText").disabled = !state.notes.length;
   }
   function setStatus(kind, text) {
     const el = $("#keyStatus");
@@ -981,11 +1040,403 @@ Rules:
     renderScan();
     toast("API key removed from this device");
   };
-  $("#btnExport").onclick = () => {
-    const text = state.notes.map((n) => toPlain(n) + "\n\n(" + fmtDate(n.updatedAt || n.createdAt) + ")").join("\n\n――――――――――\n\n");
-    const date = new Date().toISOString().slice(0, 10);
-    saveFile(`penned-notes-${date}.txt`, text, "text/plain");
+  async function shareOrSaveFile(name, text, type) {
+    try {
+      const file = new File([text], name, { type });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: name });
+        return true;
+      }
+    } catch (e) {
+      if (e && e.name === "AbortError") return false;
+    }
+    saveFile(name, text, type);
+    return true;
+  }
+  const today = () => new Date().toISOString().slice(0, 10);
+
+  $("#btnExport").onclick = async () => {
+    const backup = { app: "penned", version: 1, exportedAt: new Date().toISOString(), notes: state.notes };
+    const ok = await shareOrSaveFile(`penned-backup-${today()}.json`, JSON.stringify(backup, null, 2), "application/json");
+    if (ok) toast(`Backed up ${state.notes.length} ${state.notes.length === 1 ? "note" : "notes"}`);
   };
+  $("#btnExportText").onclick = () => {
+    const text = state.notes.map((n) => toPlain(n) + "\n\n(" + fmtDate(n.updatedAt || n.createdAt) + ")").join("\n\n――――――――――\n\n");
+    shareOrSaveFile(`penned-notes-${today()}.txt`, text, "text/plain");
+  };
+
+  $("#btnRestore").onclick = () => $("#fileRestore").click();
+  $("#fileRestore").addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    let text = "";
+    try { text = await file.text(); } catch { toast("That file couldn’t be opened."); return; }
+    let list = null;
+    try {
+      const data = JSON.parse(text);
+      list = Array.isArray(data) ? data : (data && Array.isArray(data.notes) ? data.notes : null);
+    } catch { /* not JSON: try the text format */ }
+    if (!list) list = parseTextBackup(text);
+    if (!list || !list.length) { toast("No notes found in that file. Choose a Penned backup or text export."); return; }
+    let added = 0, updated = 0;
+    for (const raw of list) {
+      if (!raw || typeof raw !== "object") continue;
+      const body = typeof raw.body === "string" ? raw.body : "";
+      const title = typeof raw.title === "string" && raw.title.trim() ? raw.title.trim().slice(0, 200) : "Untitled note";
+      if (!body && title === "Untitled note") continue;
+      const validId = typeof raw.id === "string" && /^[\w.\-~:@+]{1,80}$/.test(raw.id);
+      if (!validId && state.notes.some((x) => x.title === title && (x.body || "") === body)) continue;
+      const rec = {
+        id: validId ? raw.id : "t" + hash(title + "\n" + body),
+        title, body,
+        createdAt: Number(raw.createdAt) || Date.now(),
+        updatedAt: Number(raw.updatedAt) || Number(raw.createdAt) || Date.now(),
+        pages: Number(raw.pages) || 0
+      };
+      const cards = sanitizeCards(raw.cards);
+      if (cards.length) { rec.cards = cards; rec.cardsFrom = typeof raw.cardsFrom === "string" ? raw.cardsFrom : ""; }
+      const i = state.notes.findIndex((x) => x.id === rec.id);
+      if (i < 0) { state.notes.push(rec); added++; }
+      else if ((state.notes[i].updatedAt || 0) < rec.updatedAt) { state.notes[i] = rec; updated++; }
+    }
+    sortNotes();
+    const ok = persist();
+    renderCount();
+    renderSettings();
+    if (!added && !updated) toast("Nothing new to restore. You already have these notes.");
+    else toast((ok ? "Restored " : "Restored for now, but couldn’t save: ") + [added && `${added} new`, updated && `${updated} updated`].filter(Boolean).join(", "));
+  });
+
+  /* ---------- Text backup parser (original format) ---------- */
+  const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  function parseLooseDate(s) {
+    if (/\b\d{4}\b/.test(s)) { const direct = Date.parse(s); if (!isNaN(direct)) return direct; }
+    const m = s.match(/([A-Za-z]{3,})\.?\s+(\d{1,2})(?:,?\s+(\d{4}))?(?:,?\s+(\d{1,2}):(\d{2})\s*([AaPp][Mm])?)?/);
+    if (!m) return null;
+    const mon = MONTHS.indexOf(m[1].slice(0, 3).toLowerCase());
+    if (mon < 0) return null;
+    let hr = m[4] ? Number(m[4]) : 12;
+    const min = m[5] ? Number(m[5]) : 0;
+    if (m[6]) { const pm = /p/i.test(m[6]); if (pm && hr < 12) hr += 12; if (!pm && hr === 12) hr = 0; }
+    const now = new Date();
+    let year = m[3] ? Number(m[3]) : now.getFullYear();
+    let d = new Date(year, mon, Number(m[2]), hr, min);
+    if (!m[3] && d.getTime() > now.getTime() + 86400000) d = new Date(year - 1, mon, Number(m[2]), hr, min);
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+  function parseTextBackup(text) {
+    const parts = text.replace(/\r/g, "").split(/\n[ \t]*[―—]{5,}[ \t]*\n/);
+    const out = [];
+    let offset = 0;
+    for (const part of parts) {
+      const lines = part.replace(/^\s*\n/, "").replace(/\s+$/, "").split("\n");
+      while (lines.length && !lines[0].trim()) lines.shift();
+      if (!lines.length) continue;
+      const title = lines.shift().trim();
+      while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+      let when = null;
+      const last = lines.length ? lines[lines.length - 1].trim() : "";
+      const dm = last.match(/^\((.+)\)$/);
+      if (dm) { const t = parseLooseDate(dm[1]); if (t) { when = t; lines.pop(); } }
+      const body = lines.map((l) => {
+        const ind = l.match(/^\s*/)[0];
+        const t = l.trim();
+        if (/^☐\s?/.test(t)) return ind + "- [ ] " + t.replace(/^☐\s?/, "");
+        if (/^[☑✓✔]\s?/.test(t)) return ind + "- [x] " + t.replace(/^[☑✓✔]\s?/, "");
+        if (/^[•·▪◦]\s?/.test(t)) return ind + "- " + t.replace(/^[•·▪◦]\s?/, "");
+        return l;
+      }).join("\n").trim();
+      if (!title && !body) continue;
+      const stamp = (when || Date.now()) - offset++;
+      out.push({ title, body, createdAt: stamp, updatedAt: stamp });
+    }
+    return out;
+  }
+
+  /* ---------- Flashcards ---------- */
+  function sanitizeCards(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((c) => c && typeof c.q === "string" && typeof c.a === "string" && c.q.trim() && c.a.trim())
+      .map((c) => ({ q: c.q.trim().slice(0, 600), a: c.a.trim().slice(0, 1200) }))
+      .slice(0, 80);
+  }
+  function parseCards(text) {
+    const t = stripFences(text);
+    const s = t.indexOf("["), e = t.lastIndexOf("]");
+    if (s < 0 || e <= s) return [];
+    try { return sanitizeCards(JSON.parse(t.slice(s, e + 1))); } catch { return []; }
+  }
+  function buildCardsPrompt(n) {
+    return `Make study flashcards from the notes below.
+
+Rules:
+- Cover the key facts, definitions, names, dates, numbers, formulas, steps and ideas in the notes, one idea per card.
+- Make between 4 and 25 cards, depending on how much the notes contain. Use only what the notes say; do not add outside facts.
+- Questions are short and specific. Answers are brief, usually under 25 words.
+- Ignore "[?]" markers but keep the guessed word. Skip anything marked "[illegible]".
+- Write in the same language as the notes.
+- Reply with only a JSON array, like [{"q": "What does ATP stand for?", "a": "Adenosine triphosphate"}].
+
+Title: ${n.title || "Untitled note"}
+
+Notes:
+${(n.body || "").slice(0, 60000)}`;
+  }
+  function openCards() {
+    const c = state.current;
+    if (!c) return;
+    deleteArmed = null;
+    if (Array.isArray(c.cards) && c.cards.length) startStudy();
+    else generateCards();
+  }
+  async function generateCards() {
+    const c = state.current;
+    if (!c) return;
+    if ((c.body || "").replace(/\s+/g, " ").trim().length < 20) { toast("This note is too short to make flashcards from."); return; }
+    const key = getKey();
+    if (!key) { toast("Add your API key in Settings first."); return; }
+    state.study = null;
+    state.genCards = true;
+    state.genCount = 0;
+    state.cardsError = "";
+    state.regenArmed = false;
+    show("cards");
+    renderCards();
+    ctl = new AbortController();
+    const myCtl = ctl;
+    try {
+      const { text } = await callClaude({
+        key, model: getModel(), prompt: buildCardsPrompt(c), blobs: [], signal: myCtl.signal,
+        onText: (t) => {
+          if (!state.genCards) return;
+          state.genCount = (t.match(/"q"\s*:/g) || []).length;
+          if (state.view === "cards") renderCards();
+        }
+      });
+      if (!state.genCards || state.current !== c) return;
+      const cards = parseCards(text);
+      if (!cards.length) throw { type: "cards_parse" };
+      c.cards = cards;
+      c.cardsFrom = hash(c.body || "");
+      if (!c.id) c.id = newId();
+      saveNote(c, false);
+      state.genCards = false;
+      toast(`Made ${cards.length} flashcards`);
+      startStudy();
+    } catch (e) {
+      if (!state.genCards || state.current !== c) return;
+      state.genCards = false;
+      if (e && e.cancelled) { show("note"); renderNote(); return; }
+      state.cardsError = e && e.type === "cards_parse"
+        ? "Couldn’t turn this note into flashcards. Try again."
+        : apiMessage(e || {}).msg;
+      renderCards();
+    }
+  }
+  function shuffled(a) {
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function startStudy(order) {
+    const c = state.current;
+    if (!c || !c.cards || !c.cards.length) return;
+    let deck = order ? order.slice() : c.cards.map((_, i) => i);
+    if (state.shuffle) deck = shuffled(deck);
+    state.study = { deck, pos: 0, flipped: false, known: [], missed: [], review: !!order };
+    state.genCards = false;
+    state.cardsError = "";
+    state.regenArmed = false;
+    show("cards");
+    renderCards();
+  }
+  function cardText(s) { return inline(s).replace(/\n/g, "<br>"); }
+  function renderCards() {
+    const c = state.current;
+    if (!c) return;
+    $("#cardsTitle").textContent = c.title || "Untitled note";
+    const body = $("#cardsBody"), sub = $("#cardsSub");
+    body.innerHTML = "";
+
+    if (state.genCards) {
+      sub.textContent = "Making flashcards from this note";
+      const box = document.createElement("div");
+      box.className = "card";
+      box.innerHTML = '<div class="thinking"><svg class="pen" viewBox="0 0 42 12" aria-hidden="true"><path d="M1 8c4-6 7 2 11-2s6 3 10-1 7 3 10 0 5 1 9-1"/></svg><span></span></div>';
+      box.querySelector("span").textContent = state.genCount ? `Written ${state.genCount} ${state.genCount === 1 ? "card" : "cards"} so far…` : "Reading your note…";
+      const stop = document.createElement("button");
+      stop.className = "btn";
+      stop.style.marginTop = "1rem";
+      stop.textContent = "Stop";
+      stop.onclick = () => ctl && ctl.abort();
+      box.appendChild(stop);
+      body.appendChild(box);
+      return;
+    }
+    if (state.cardsError) {
+      sub.textContent = "";
+      const err = document.createElement("div");
+      err.className = "err";
+      err.textContent = state.cardsError;
+      body.appendChild(err);
+      const row = document.createElement("div");
+      row.className = "study-actions";
+      row.style.marginTop = "1rem";
+      const again = document.createElement("button");
+      again.className = "btn primary"; again.textContent = "Try again"; again.onclick = generateCards;
+      const back = document.createElement("button");
+      back.className = "btn"; back.textContent = "Back to note"; back.onclick = () => { show("note"); renderNote(); };
+      row.append(again, back);
+      body.appendChild(row);
+      return;
+    }
+
+    const s = state.study;
+    if (!s) return;
+    const total = s.deck.length;
+    const prog = document.createElement("div");
+    prog.className = "progress";
+    prog.setAttribute("aria-hidden", "true");
+    prog.innerHTML = `<span style="width:${Math.round((Math.min(s.pos, total) / total) * 100)}%"></span>`;
+
+    if (s.pos >= total) {
+      sub.textContent = s.review ? "Review round finished" : "Round finished";
+      body.appendChild(prog);
+      const sum = document.createElement("div");
+      sum.className = "card summary";
+      sum.innerHTML = '<h3></h3><p class="score"></p><p></p><div class="col"></div>';
+      sum.querySelector("h3").textContent = s.missed.length ? "Nice work. Keep going." : "You knew every card.";
+      sum.querySelector(".score").textContent = `${s.known.length} / ${total}`;
+      sum.querySelectorAll("p")[1].textContent = s.missed.length
+        ? `${s.missed.length} ${s.missed.length === 1 ? "card needs" : "cards need"} another look.`
+        : "Come back later to keep it fresh.";
+      const col = sum.querySelector(".col");
+      if (s.missed.length) {
+        const r = document.createElement("button");
+        r.className = "btn primary"; r.textContent = `Review the ${s.missed.length} I missed`;
+        const missed = s.missed.slice();
+        r.onclick = () => startStudy(missed);
+        col.appendChild(r);
+      }
+      const again = document.createElement("button");
+      again.className = "btn" + (s.missed.length ? "" : " primary"); again.textContent = "Start over with all cards"; again.onclick = () => startStudy();
+      const back = document.createElement("button");
+      back.className = "btn"; back.textContent = "Back to note"; back.onclick = () => { state.study = null; show("note"); renderNote(); };
+      col.append(again, back);
+      body.appendChild(sum);
+      return;
+    }
+
+    const idx = s.deck[s.pos];
+    const card = c.cards[idx];
+    sub.textContent = `Card ${s.pos + 1} of ${total}` + (s.review ? ", reviewing missed cards" : "");
+    body.appendChild(prog);
+
+    const flash = document.createElement("div");
+    flash.className = "flash";
+    flash.innerHTML = '<div class="flash-inner" id="flashBtn" role="button" tabindex="0"><span class="face"><span class="lbl"></span><span class="txt"></span><span class="tap"></span></span></div>';
+    const inner = flash.querySelector(".flash-inner");
+    const face = flash.querySelector(".face");
+    const paintFace = () => {
+      face.classList.toggle("is-answer", s.flipped);
+      face.querySelector(".lbl").textContent = s.flipped ? "Answer" : "Question";
+      face.querySelector(".txt").innerHTML = cardText(s.flipped ? card.a : card.q);
+      face.querySelector(".tap").textContent = s.flipped ? "Tap to see the question again" : "Tap the card to see the answer";
+      face.scrollTop = 0;
+    };
+    body.appendChild(flash);
+
+    const actions = document.createElement("div");
+    actions.className = "study-actions";
+    body.appendChild(actions);
+
+    const syncFaces = () => {
+      paintFace();
+      inner.setAttribute("aria-label", (s.flipped ? "Answer: " : "Question: ") + face.querySelector(".txt").textContent);
+      actions.innerHTML = "";
+      if (!s.flipped) {
+        const reveal = document.createElement("button");
+        reveal.className = "btn primary"; reveal.textContent = "Show answer";
+        reveal.onclick = flip;
+        actions.appendChild(reveal);
+      } else {
+        const miss = document.createElement("button");
+        miss.className = "btn"; miss.textContent = "Still learning";
+        miss.onclick = () => answer(false);
+        const got = document.createElement("button");
+        got.className = "btn ink"; got.textContent = "Got it";
+        got.onclick = () => answer(true);
+        actions.append(miss, got);
+      }
+    };
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let turning = false;
+    const flip = () => {
+      if (turning) return;
+      if (reduce) { s.flipped = !s.flipped; syncFaces(); return; }
+      turning = true;
+      inner.classList.remove("turn");
+      void inner.offsetWidth;
+      inner.classList.add("turn");
+      setTimeout(() => { s.flipped = !s.flipped; syncFaces(); }, 160);
+      setTimeout(() => { inner.classList.remove("turn"); turning = false; }, 340);
+    };
+    inner.onclick = flip;
+    inner.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); } };
+    syncFaces();
+
+    const extra = document.createElement("div");
+    extra.className = "study-extra";
+    const sh = document.createElement("button");
+    sh.className = "linkbtn";
+    sh.textContent = state.shuffle ? "Shuffle: on" : "Shuffle: off";
+    sh.setAttribute("aria-pressed", state.shuffle ? "true" : "false");
+    sh.onclick = () => { state.shuffle = !state.shuffle; lsSet("penned.shuffle", state.shuffle ? "1" : "0"); startStudy(s.review ? s.deck : undefined); toast(state.shuffle ? "Cards shuffled" : "Cards back in order"); };
+    const regen = document.createElement("button");
+    regen.className = "linkbtn" + (state.regenArmed ? " armed" : "");
+    regen.textContent = state.regenArmed ? "Tap again to replace these cards" : "Make new cards";
+    regen.onclick = () => {
+      if (!state.regenArmed) { state.regenArmed = true; renderCards(); setTimeout(() => { if (state.regenArmed) { state.regenArmed = false; if (state.view === "cards") renderCards(); } }, 4000); return; }
+      generateCards();
+    };
+    extra.append(sh, regen);
+    body.appendChild(extra);
+
+    if (c.cardsFrom && c.cardsFrom !== hash(c.body || "")) {
+      const st = document.createElement("div");
+      st.className = "stale";
+      st.innerHTML = "<span>You’ve edited this note since these cards were made.</span>";
+      const b = document.createElement("button");
+      b.className = "linkbtn"; b.textContent = "Update cards"; b.onclick = generateCards;
+      st.appendChild(b);
+      body.appendChild(st);
+    }
+  }
+  function answer(knew) {
+    const s = state.study;
+    if (!s || !s.flipped) return;
+    const idx = s.deck[s.pos];
+    (knew ? s.known : s.missed).push(idx);
+    s.pos++;
+    s.flipped = false;
+    state.regenArmed = false;
+    renderCards();
+    window.scrollTo(0, 0);
+  }
+  $("#btnCardsBack").onclick = () => {
+    if (state.genCards && ctl) ctl.abort();
+    state.genCards = false;
+    state.study = null;
+    show("note");
+    renderNote();
+  };
+  document.addEventListener("keydown", (e) => {
+    if (state.view !== "cards" || !state.study || state.study.pos >= state.study.deck.length) return;
+    if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (e.key === "ArrowRight" && state.study.flipped) { e.preventDefault(); answer(true); }
+    else if (e.key === "ArrowLeft" && state.study.flipped) { e.preventDefault(); answer(false); }
+  });
 
   /* ---------- Start ---------- */
   loadNotes();
