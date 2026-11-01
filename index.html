@@ -220,7 +220,23 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
 .summary h3{font-size:1.2rem; margin:0 0 .3rem}
 .summary .score{font-family:var(--serif); font-size:2.4rem; line-height:1.1; margin:.4rem 0 .2rem; color:var(--ink)}
 .summary .col{display:flex; flex-direction:column; gap:.55rem; margin-top:1rem}
+.ce{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:.85rem .95rem; margin-bottom:.7rem}
+.ce.invalid{border-color:var(--danger); box-shadow:inset 0 0 0 1px var(--danger)}
+.ce-head{display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:.88rem; color:var(--muted)}
+.ce label{display:block; font-size:.82rem; font-weight:600; color:var(--muted); margin-top:.45rem}
+.ce textarea{display:block; width:100%; margin-top:.25rem; border:1px solid var(--line); background:var(--bg); border-radius:10px; padding:.6rem .7rem; color:var(--ink); font-family:var(--serif); font-size:1rem; line-height:1.4; resize:none; overflow:hidden; min-height:2.8rem}
+.ce textarea:focus-visible{outline:2px solid var(--accent); outline-offset:0}
+.linkbtn.danger{color:var(--danger)}
+.add-card{width:100%; border-style:dashed}
 @media (prefers-reduced-motion: reduce){ .flash-inner.turn{animation:none} .progress span{transition:none} }
+
+/* Claude API activity badge */
+.api-badge{position:fixed; z-index:6; top:calc(env(safe-area-inset-top,0px) + 4.5rem); right:max(1rem, calc((100vw - 40rem) / 2 + 1rem)); display:flex; align-items:center; gap:.4rem; background:var(--ink); color:var(--bg); padding:.35rem .75rem .35rem .45rem; border-radius:999px; font-size:.8rem; font-weight:600; box-shadow:var(--shadow); opacity:0; transform:translateY(-.4rem); pointer-events:none; transition:opacity .2s, transform .2s}
+.api-badge.on{opacity:1; transform:none}
+.api-badge svg{width:18px; height:18px; flex:none; color:var(--hl)}
+.api-badge.on svg{animation:spin 2.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ .api-badge{transition:none} .api-badge.on svg{animation:none} }
 
 .toast{position:fixed; left:50%; bottom:calc(5.5rem + env(safe-area-inset-bottom,0px)); transform:translate(-50%, 1rem); background:var(--ink); color:var(--bg); padding:.6rem 1rem; border-radius:999px; font-weight:600; font-size:.9rem; opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:20; max-width:calc(100% - 2rem); text-align:center}
 .toast.show{opacity:1; transform:translate(-50%,0)}
@@ -387,6 +403,10 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
   </section>
 </main>
 
+<div class="api-badge" id="apiBadge" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3v5M12 16v5M3 12h5M16 12h5M5.6 5.6l3.5 3.5M14.9 14.9l3.5 3.5M5.6 18.4l3.5-3.5M14.9 9.1l3.5-3.5"/></svg>
+  <span id="apiBadgeText"></span>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -402,7 +422,7 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
   const state = {
     view: "scan", pages: [], mode: "exact", notes: [], current: null, from: "notes",
     editing: false, streaming: false, query: "", memoryOnly: false, keyOk: null,
-    study: null, genCards: false, genCount: 0, cardsError: "", shuffle: lsGetEarly("penned.shuffle") === "1", regenArmed: false
+    study: null, genCards: false, genCount: 0, cardsError: "", shuffle: lsGetEarly("penned.shuffle") === "1", regenArmed: false, cardEdit: null
   };
   function lsGetEarly(k) { try { return localStorage.getItem(k); } catch { return null; } }
   let ctl = null, deleteArmed = null;
@@ -524,6 +544,7 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
     if ((state.streaming || state.genCards) && ctl) ctl.abort();
     state.genCards = false;
     state.study = null;
+    state.cardEdit = null;
     state.editing = false;
     deleteArmed = null;
   }
@@ -535,6 +556,7 @@ main{max-width:40rem; margin:0 auto; padding:1.25rem 1rem 2rem}
   }
   function go(view) {
     if (!confirmDiscard()) return;
+    if (state.cardEdit && cardEditDirty() && !window.confirm("Discard your changes to these cards?")) return;
     leaveNote();
     show(view);
     if (view === "scan") renderScan();
@@ -670,12 +692,25 @@ Rules:
       "anthropic-dangerous-direct-browser-access": "true"
     };
   }
+  let apiActive = 0;
+  function apiBusy(delta, label) {
+    apiActive = Math.max(0, apiActive + delta);
+    const badge = $("#apiBadge");
+    if (label && delta > 0) $("#apiBadgeText").textContent = label;
+    if (apiActive > 0) { if (!$("#apiBadgeText").textContent) $("#apiBadgeText").textContent = "Using Claude API"; badge.classList.add("on"); }
+    else { badge.classList.remove("on"); setTimeout(() => { if (!apiActive) $("#apiBadgeText").textContent = ""; }, 250); }
+  }
   async function readApiError(res) {
     let type = "", message = "";
     try { const j = await res.json(); type = j?.error?.type || ""; message = j?.error?.message || ""; } catch {}
     return { status: res.status, type, message };
   }
-  async function callClaude({ key, model, prompt, blobs, signal, onText }) {
+  async function callClaude(opts) {
+    apiBusy(1, opts.label || "Using Claude API");
+    try { return await callClaudeRaw(opts); }
+    finally { apiBusy(-1); }
+  }
+  async function callClaudeRaw({ key, model, prompt, blobs, signal, onText }) {
     const images = await Promise.all(blobs.map(blobToBase64));
     const content = images.map((data) => ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data } }));
     content.push({ type: "text", text: prompt });
@@ -750,7 +785,7 @@ Rules:
     renderNote();
     try {
       const { text, truncated } = await callClaude({
-        key, model: getModel(), prompt: buildPrompt(n, state.mode), blobs, signal: ctl.signal,
+        key, model: getModel(), prompt: buildPrompt(n, state.mode), blobs, signal: ctl.signal, label: "Claude is reading",
         onText: (t) => { if (state.current && state.streaming) { state.current.streamText = t; renderNote(); } }
       });
       const { title, body } = splitTitle(stripFences(text));
@@ -1016,6 +1051,7 @@ Rules:
     btn.disabled = true;
     setStatus(null);
     $("#keyStatusText").textContent = "Testing your key…";
+    apiBusy(1, "Testing with Claude API");
     try {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST", headers: apiHeaders(key),
@@ -1027,6 +1063,7 @@ Rules:
       state.keyOk = null;
       setStatus("bad", "Saved, but couldn’t reach Claude to test it. Check your connection.");
     } finally {
+      apiBusy(-1);
       btn.disabled = false;
       renderScan();
     }
@@ -1208,7 +1245,7 @@ ${(n.body || "").slice(0, 60000)}`;
     const myCtl = ctl;
     try {
       const { text } = await callClaude({
-        key, model: getModel(), prompt: buildCardsPrompt(c), blobs: [], signal: myCtl.signal,
+        key, model: getModel(), prompt: buildCardsPrompt(c), blobs: [], signal: myCtl.signal, label: "Claude is making cards",
         onText: (t) => {
           if (!state.genCards) return;
           state.genCount = (t.match(/"q"\s*:/g) || []).length;
@@ -1291,6 +1328,8 @@ ${(n.body || "").slice(0, 60000)}`;
       body.appendChild(row);
       return;
     }
+
+    if (state.cardEdit) { renderCardEditor(body, sub); return; }
 
     const s = state.study;
     if (!s) return;
@@ -1400,7 +1439,11 @@ ${(n.body || "").slice(0, 60000)}`;
       if (!state.regenArmed) { state.regenArmed = true; renderCards(); setTimeout(() => { if (state.regenArmed) { state.regenArmed = false; if (state.view === "cards") renderCards(); } }, 4000); return; }
       generateCards();
     };
-    extra.append(sh, regen);
+    const ed = document.createElement("button");
+    ed.className = "linkbtn";
+    ed.textContent = "Edit cards";
+    ed.onclick = () => openCardEditor(idx);
+    extra.append(sh, ed, regen);
     body.appendChild(extra);
 
     if (c.cardsFrom && c.cardsFrom !== hash(c.body || "")) {
@@ -1424,7 +1467,136 @@ ${(n.body || "").slice(0, 60000)}`;
     renderCards();
     window.scrollTo(0, 0);
   }
+  function openCardEditor(focusIndex) {
+    const c = state.current;
+    if (!c) return;
+    state.cardEdit = {
+      draft: (c.cards || []).map((x) => ({ q: x.q, a: x.a })),
+      original: JSON.stringify((c.cards || []).map((x) => ({ q: x.q, a: x.a }))),
+      focus: typeof focusIndex === "number" ? focusIndex : null,
+      invalid: -1
+    };
+    if (!state.cardEdit.draft.length) { state.cardEdit.draft.push({ q: "", a: "" }); state.cardEdit.focus = 0; }
+    state.regenArmed = false;
+    show("cards");
+    renderCards();
+  }
+  function cardEditDirty() {
+    const e = state.cardEdit;
+    if (!e) return false;
+    const now = JSON.stringify(e.draft.filter((x) => x.q.trim() || x.a.trim()).map((x) => ({ q: x.q.trim(), a: x.a.trim() })));
+    return now !== e.original;
+  }
+  function closeCardEditor(force) {
+    if (!force && cardEditDirty() && !window.confirm("Discard your changes to these cards?")) return false;
+    state.cardEdit = null;
+    return true;
+  }
+  function autoGrow(ta) { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + 2 + "px"; }
+  function renderCardEditor(body, sub) {
+    const e = state.cardEdit;
+    const n = e.draft.length;
+    sub.textContent = `Editing ${n} ${n === 1 ? "card" : "cards"}`;
+    const list = document.createElement("div");
+    e.draft.forEach((card, i) => {
+      const box = document.createElement("div");
+      box.className = "ce" + (e.invalid === i ? " invalid" : "");
+      box.innerHTML = `<div class="ce-head"><span>Card ${i + 1}</span><button class="linkbtn danger" type="button">Delete</button></div>
+        <label>Question<textarea rows="2" maxlength="600"></textarea></label>
+        <label>Answer<textarea rows="2" maxlength="1200"></textarea></label>`;
+      const [qa, aa] = box.querySelectorAll("textarea");
+      qa.value = card.q; aa.value = card.a;
+      const clearInvalid = () => { if (e.invalid === i) { e.invalid = -1; box.classList.remove("invalid"); } };
+      qa.oninput = () => { card.q = qa.value; autoGrow(qa); clearInvalid(); };
+      aa.oninput = () => { card.a = aa.value; autoGrow(aa); clearInvalid(); };
+      const del = box.querySelector(".ce-head button");
+      del.setAttribute("aria-label", `Delete card ${i + 1}`);
+      del.onclick = () => {
+        e.draft.splice(i, 1);
+        if (e.invalid === i) e.invalid = -1; else if (e.invalid > i) e.invalid--;
+        e.focus = null;
+        renderCards();
+        toast("Card removed. Tap Cancel to undo.");
+      };
+      list.appendChild(box);
+    });
+    body.appendChild(list);
+
+    const add = document.createElement("button");
+    add.className = "btn add-card";
+    add.textContent = "Add a card";
+    add.onclick = () => { e.draft.push({ q: "", a: "" }); e.focus = e.draft.length - 1; renderCards(); };
+    body.appendChild(add);
+
+    if (!n) {
+      const p = document.createElement("p");
+      p.className = "hint";
+      p.textContent = "Saving with no cards removes this note’s flashcards.";
+      body.appendChild(p);
+    }
+
+    const tb = document.createElement("div");
+    tb.className = "toolbar";
+    const cancel = document.createElement("button");
+    cancel.className = "btn wide"; cancel.textContent = "Cancel";
+    cancel.onclick = () => {
+      if (!closeCardEditor(false)) return;
+      if (state.study && state.current.cards && state.current.cards.length) renderCards();
+      else { show("note"); renderNote(); }
+    };
+    const save = document.createElement("button");
+    save.className = "btn ink wide"; save.textContent = "Save cards";
+    save.onclick = saveCardEdits;
+    tb.append(cancel, save);
+    body.appendChild(tb);
+
+    body.querySelectorAll(".ce textarea").forEach(autoGrow);
+    if (e.focus !== null && e.focus < n) {
+      const target = list.children[e.focus];
+      e.focus = null;
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ block: "center" });
+        const tas = [...target.querySelectorAll("textarea")];
+        (tas.find((t) => !t.value.trim()) || tas[0]).focus({ preventScroll: true });
+      });
+    }
+  }
+  function saveCardEdits() {
+    const e = state.cardEdit, c = state.current;
+    if (!e || !c) return;
+    const cleaned = [];
+    for (let i = 0; i < e.draft.length; i++) {
+      const q = e.draft[i].q.trim(), a = e.draft[i].a.trim();
+      if (!q && !a) continue;
+      if (!q || !a) {
+        e.invalid = i;
+        e.focus = i;
+        renderCards();
+        toast(`Card ${i + 1} needs both a question and an answer.`);
+        return;
+      }
+      cleaned.push({ q, a });
+    }
+    const changed = cardEditDirty();
+    state.cardEdit = null;
+    if (!cleaned.length) {
+      c.cards = [];
+      delete c.cardsFrom;
+      saveNote(c, false);
+      toast("Flashcards removed from this note");
+      show("note");
+      renderNote();
+      return;
+    }
+    c.cards = cleaned;
+    if (!c.cardsFrom) c.cardsFrom = hash(c.body || "");
+    if (changed) saveNote(c, false);
+    toast(changed ? "Cards saved" : "No changes");
+    startStudy();
+  }
+
   $("#btnCardsBack").onclick = () => {
+    if (state.cardEdit && !closeCardEditor(false)) return;
     if (state.genCards && ctl) ctl.abort();
     state.genCards = false;
     state.study = null;
@@ -1432,7 +1604,7 @@ ${(n.body || "").slice(0, 60000)}`;
     renderNote();
   };
   document.addEventListener("keydown", (e) => {
-    if (state.view !== "cards" || !state.study || state.study.pos >= state.study.deck.length) return;
+    if (state.view !== "cards" || state.cardEdit || !state.study || state.study.pos >= state.study.deck.length) return;
     if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
     if (e.key === "ArrowRight" && state.study.flipped) { e.preventDefault(); answer(true); }
     else if (e.key === "ArrowLeft" && state.study.flipped) { e.preventDefault(); answer(false); }
