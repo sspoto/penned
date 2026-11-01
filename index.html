@@ -452,7 +452,7 @@ button.chip{cursor:pointer}
         <button class="btn ink grow" id="btnExport">Back up notes</button>
         <button class="btn grow" id="btnRestore">Restore from backup</button>
       </div>
-      <input type="file" id="fileRestore" accept=".json,application/json,text/plain" hidden>
+      <input type="file" id="fileRestore" accept=".json,.txt,application/json,text/plain" hidden>
       <p class="hint">Backups are saved as a .json file, flashcards included. Keep it in Files or iCloud Drive, then use Restore on this or another device. Restoring adds the notes in the backup and keeps the newest version of any note you already have. Restore also accepts the older text backups and text exports.</p>
       <div class="row" style="margin-top:.75rem">
         <button class="btn grow" id="btnExportText">Export all as readable text</button>
@@ -1174,19 +1174,17 @@ Rules:
   };
 
   $("#btnRestore").onclick = () => $("#fileRestore").click();
-  $("#fileRestore").addEventListener("change", async (e) => {
-    const file = e.target.files && e.target.files[0];
-    e.target.value = "";
-    if (!file) return;
-    let text = "";
-    try { text = await file.text(); } catch { toast("That file couldn’t be opened."); return; }
-    let list = null;
+  function backupList(text) {
     try {
       const data = JSON.parse(text);
-      list = Array.isArray(data) ? data : (data && Array.isArray(data.notes) ? data.notes : null);
-    } catch { /* not JSON: try the text format */ }
-    if (!list) list = parseTextBackup(text);
-    if (!list || !list.length) { toast("No notes found in that file. Choose a Penned backup or text export."); return; }
+      return Array.isArray(data) ? data : (data && Array.isArray(data.notes) ? data.notes : null);
+    } catch { return null; }
+  }
+  // Merges notes from a backup; returns null if nothing usable was found
+  function restoreFromText(text, allowTextFormat) {
+    let list = backupList(text);
+    if (!list && allowTextFormat) list = parseTextBackup(text);
+    if (!list || !list.length) return null;
     let added = 0, updated = 0;
     for (const raw of list) {
       if (!raw || typeof raw !== "object") continue;
@@ -1213,9 +1211,22 @@ Rules:
     sortNotes();
     const ok = persist();
     renderCount();
+    return { added, updated, ok };
+  }
+  function restoreMessage(r) {
+    if (!r.added && !r.updated) return "Nothing new to restore. You already have these notes.";
+    return (r.ok ? "Restored " : "Restored for now, but couldn’t save: ") + [r.added && `${r.added} new`, r.updated && `${r.updated} updated`].filter(Boolean).join(", ");
+  }
+  $("#fileRestore").addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    let text = "";
+    try { text = await file.text(); } catch { toast("That file couldn’t be opened."); return; }
+    const r = restoreFromText(text, true);
+    if (!r) { toast("No notes found in that file. Choose a Penned backup or text export."); return; }
     renderSettings();
-    if (!added && !updated) toast("Nothing new to restore. You already have these notes.");
-    else toast((ok ? "Restored " : "Restored for now, but couldn’t save: ") + [added && `${added} new`, updated && `${updated} updated`].filter(Boolean).join(", "));
+    toast(restoreMessage(r));
   });
 
   /* ---------- Text backup parser (original format) ---------- */
@@ -1868,10 +1879,10 @@ ${(n.body || "").slice(0, 60000)}`;
     const im = state.importing;
     box.innerHTML = `
       <h3>Import flashcards</h3>
-      <p>Paste cards below or choose a text file. Put each question or term on one line and its answer on the next. Blank lines and “Created using AI” lines are skipped, and tab-separated exports (like Quizlet) work too.</p>
+      <p>Paste cards below or choose a text file. Put each question or term on one line and its answer on the next. Blank lines and “Created using AI” lines are skipped, and tab-separated exports (like Quizlet) work too. You can also choose a Penned backup (.json) here.</p>
       <label class="field"><span>Cards</span><textarea class="input imp-text" rows="8" spellcheck="false" placeholder="What is brand equity?&#10;The value created by a brand.&#10;&#10;Branding&#10;The process of endowing products and services with the power of a brand."></textarea></label>
       <div class="row" style="margin:-.4rem 0 1rem"><button class="btn sm" type="button" id="impFileBtn">Choose a text file</button></div>
-      <input type="file" id="impFile" accept=".txt,.tsv,.csv,text/plain" hidden>
+      <input type="file" id="impFile" accept=".txt,.json,.csv,.tsv,text/plain,application/json" hidden>
       <label class="field"><span>Set name</span><input class="input imp-title" maxlength="200" placeholder="e.g. 10: Building Strong Brands"></label>
       <label class="field"><span>Label (optional)</span><input class="input imp-label" maxlength="30" list="impLabels" placeholder="e.g. Marketing"></label>
       <datalist id="impLabels"></datalist>
@@ -1882,6 +1893,13 @@ ${(n.body || "").slice(0, 60000)}`;
     const dl = box.querySelector("#impLabels");
     for (const l of labelsFrom(state.notes)) { const o = document.createElement("option"); o.value = l.name; dl.appendChild(o); }
     const preview = () => {
+      const bl = backupList(ta.value);
+      if (bl) {
+        const sets = bl.filter((n) => n && Array.isArray(n.cards) && n.cards.length).length;
+        box.querySelector(".imp-preview").textContent = `This is a Penned backup with ${bl.length} ${bl.length === 1 ? "note" : "notes"} (${sets} with flashcards). Tap Import to restore it.`;
+        box.querySelector("#impGo").disabled = false;
+        return;
+      }
       const r = parseFlashcardText(ta.value);
       if (r.title && !im.titleTouched) { ti.value = r.title; im.title = r.title; }
       const p = box.querySelector(".imp-preview");
@@ -1898,7 +1916,17 @@ ${(n.body || "").slice(0, 60000)}`;
       const f = e.target.files && e.target.files[0];
       e.target.value = "";
       if (!f) return;
-      try { ta.value = await f.text(); } catch { toast("That file couldn’t be opened."); return; }
+      let text = "";
+      try { text = await f.text(); } catch { toast("That file couldn’t be opened."); return; }
+      if (backupList(text)) {
+        const r = restoreFromText(text, false);
+        if (!r) { toast("That backup has no notes in it."); return; }
+        state.importing = null;
+        renderDecks();
+        toast(restoreMessage(r));
+        return;
+      }
+      ta.value = text;
       im.text = ta.value;
       if (!im.titleTouched) { im.title = ""; }
       const r = parseFlashcardText(ta.value);
@@ -1907,6 +1935,13 @@ ${(n.body || "").slice(0, 60000)}`;
     };
     box.querySelector("#impCancel").onclick = () => { state.importing = null; renderDecks(); };
     box.querySelector("#impGo").onclick = () => {
+      if (backupList(ta.value)) {
+        const rr = restoreFromText(ta.value, false);
+        state.importing = null;
+        renderDecks();
+        toast(rr ? restoreMessage(rr) : "That backup has no notes in it.");
+        return;
+      }
       const r = parseFlashcardText(ta.value);
       if (!r.cards.length) return;
       const title = (ti.value.trim() || r.title || "Imported flashcards").slice(0, 200);
